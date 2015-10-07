@@ -397,7 +397,7 @@ class RobotExclusionRulesParser(object):
         if self._response_code >= 200 and self._response_code < 300:
             # All's well.
             if expires_header:
-                self.expiration_date = email.utils.parsedate_tz(expires_header)
+                self.expiration_date = email_utils.parsedate_tz(expires_header)
                 
                 if self.expiration_date:
                     # About time zones -- the call to parsedate_tz() returns a
@@ -419,7 +419,7 @@ class RobotExclusionRulesParser(object):
                     if self.expiration_date[9] == None: 
                         self.expiration_date = self.expiration_date[:9] + (0,)
                 
-                    self.expiration_date = email.utils.mktime_tz(self.expiration_date)
+                    self.expiration_date = email_utils.mktime_tz(self.expiration_date)
                     if self.use_local_time: 
                         # I have to do a little more converting to get this 
                         # UTC timestamp into localtime.

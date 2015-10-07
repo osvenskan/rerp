@@ -18,20 +18,20 @@
 
 <h2>A Robot Exclusion Rules Parser for Python</h2>
 
-<p><tt>Robotexclusionrulesparser</tt> is a Python-licensed 
+<p><tt>Robotexclusionrulesparser</tt> is a BSD-licensed 
 alternative to and improvement on
 the Python standard library module <tt>robotparser</tt>.
 You can download the full package (containing documentation, unit
-tests, etc.) or just the individual module. It works with Python 
+tests, etc.) or just the individual module. It has been tested with Python 
 2.4 &ndash; 2.6.
 </p>
 
 <p>Full package:
-<a href="robotexclusionrulesparser-1.2.tar.gz">robotexclusionrulesparser-1.2.tar.gz</a> 
-<a href="robotexclusionrulesparser-1.2.md5.txt">[md5 sum]</a>
+<a href="robotexclusionrulesparser-1.2.1.tar.gz">robotexclusionrulesparser-1.2.1.tar.gz</a> 
+<a href="robotexclusionrulesparser-1.2.1.md5.txt">[md5 sum]</a>
 </p>
 <p>Just the module: 
-    <a href="robotexclusionrulesparser-1.2.py">robotexclusionrulesparser-1.2.py</a>
+    <a href="robotexclusionrulesparser-1.2.1.py">robotexclusionrulesparser-1.2.1.py</a>
 </p>
 
 <p>This documentation refers to three similar-but-different robots.txt 
@@ -569,7 +569,18 @@ nothing is allowed. Thus, these two rules mean the same thing:
 <h3>Version History</h3>
 
 <ul>
-	<li><strong>Current &ndash; 1.2 (27 September 2009)</strong> &ndash;
+	<li><strong>Current &ndash; 1.2.1 (19 November 2009)</strong> &ndash;
+	    <ul>
+	        <li>Changed references to <tt>email.utils</tt> to 
+	            <tt>email_utils</tt> which
+	            is friendlier to older Python versions. Thanks to Alex 
+	            Bendig for the heads up.
+	        </li>
+	        <li>Changed from a Python to BSD license.</li>
+	    </ul>
+	</li>
+
+	<li>1.2 (27 September 2009) &ndash;
 	    <ul>
 	        <li>Renamed the <tt>Ruleset</tt> class to <tt>_Ruleset</tt> and 
 	            moved it out of the <tt>RobotExclusionRulesParser</tt> class. 
@@ -691,7 +702,7 @@ nothing is allowed. Thus, these two rules mean the same thing:
 <h3>License</h3>
 
 <p>This code is copyright Philip Semanchuk under 
-<a href="http://www.python.org/psf/license/">the Python License</a>.
+<a href="http://creativecommons.org/licenses/BSD/">a 3-clause BSD license</a>.
 </p>
 
 <p>Thanks to Bastian Kleineidam for writing Python's

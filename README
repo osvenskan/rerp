@@ -11,4 +11,4 @@ and wildcard syntax in path names.
 Complete documentation (including a comparison with the standard library
 module robotparser) is available in ReadMe.html.
 
-Robotexclusionrulesparser is released under the Python license. 
+Robotexclusionrulesparser is released under a BSD license. 

@@ -1,11 +1,15 @@
 # Python modules
 import distutils.core as duc
 
-VERSION = file("VERSION").read().strip()
+f = open("VERSION")
+VERSION = f.read().strip()
+f.close()
 
 name = "robotexclusionrulesparser"
 description = "An alternative to Python's robotparser module"
-long_description = file("README").read().strip()
+f = open("README")
+long_description = f.read().strip()
+f.close()
 author = "Philip Semanchuk",
 author_email = "philip@semanchuk.com",
 maintainer = "Philip Semanchuk",
@@ -15,14 +19,14 @@ py_modules = ["robotexclusionrulesparser"]
 # http://pypi.python.org/pypi?:action=list_classifiers
 classifiers = [ 'Development Status :: 5 - Production/Stable', 
                 'Intended Audience :: Developers', 
-                'License :: OSI Approved :: Python Software Foundation License',
+                'License :: OSI Approved :: BSD License',
                 'Operating System :: MacOS :: MacOS X',
                 'Operating System :: POSIX', 
                 'Operating System :: Unix', 
                 'Environment :: Win32 (MS Windows)',
                 'Programming Language :: Python', 
                 'Topic :: Utilities' ]
-license = "http://www.python.org/psf/license/"
+license = "http://creativecommons.org/licenses/BSD/"
 keywords = "robots.txt robot parser"
 
 
