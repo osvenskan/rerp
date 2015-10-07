@@ -315,7 +315,7 @@ class RobotExclusionRulesParser(object):
         self.use_local_time = True
         self.expiration_date = self._now() + SEVEN_DAYS
         self._response_code = None
-        self._sitemap = None
+        self._sitemaps = [ ]
         self.__rulesets = [ ]
         
 
@@ -335,12 +335,22 @@ class RobotExclusionRulesParser(object):
                             
     # sitemap is read-only.
     __doc = """The sitemap URL present in the robots.txt, if any. Defaults 
-    to None. Read only."""
-    def __get_sitemap(self): return self._sitemap
+    to None. Read only. Deprecated; use 'sitemaps' instead."""
+    def __get_sitemap(self): 
+        _raise_error(DeprecationWarning, "The sitemap property is deprecated. Use 'sitemaps' instead.")
+        #return (self._sitemaps[0] if self._sitemaps else None)
     def __set_sitemap(self, foo):
         _raise_error(AttributeError, "sitemap is read-only")
     sitemap = property(__get_sitemap, __set_sitemap, doc=__doc)
-                            
+
+    # sitemaps is read-only.
+    __doc = """The sitemap URLs present in the robots.txt, if any. Defaults 
+    to an empty list. Read only."""
+    def __get_sitemaps(self): return self._sitemaps
+    def __set_sitemaps(self, foo):
+        _raise_error(AttributeError, "sitemaps is read-only")
+    sitemaps = property(__get_sitemaps, __set_sitemaps, doc=__doc)
+
 
     def _now(self):
         if self.use_local_time:
@@ -538,7 +548,7 @@ class RobotExclusionRulesParser(object):
         
     def parse(self, s):
         """Parses the passed string as a set of robots.txt rules."""
-        self._sitemap = None
+        self._sitemaps = [ ]
         self.__rulesets = [ ]
         
         if (PY_MAJOR_VERSION > 2) and (isinstance(s, bytes) or isinstance(s, bytearray)) or \
@@ -623,7 +633,7 @@ class RobotExclusionRulesParser(object):
                                 current_ruleset.add_allow_rule(data)
                         elif field == "sitemap":
                             previous_line_was_a_user_agent = False
-                            self._sitemap = data
+                            self._sitemaps.append(data)
                         elif field == "crawl-delay":
                             # Only Yahoo documents the syntax for Crawl-delay.
                             # ref: http://help.yahoo.com/l/us/yahoo/search/webcrawler/slurp-03.html
@@ -656,8 +666,8 @@ class RobotExclusionRulesParser(object):
 
     
     def __str__(self):
-        if self._sitemap:
-            s = "Sitemap: %s\n\n" % self._sitemap
+        if self._sitemaps:
+            s = "Sitemaps: %s\n\n" % self._sitemaps
         else: 
             s = ""
         return s + '\n'.join( [str(ruleset) for ruleset in self.__rulesets] )

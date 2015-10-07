@@ -455,6 +455,8 @@ User-agent: Foobot
 Disallow:  *
 Crawl-Delay: 5
 
+Sitemap: http://www.example.org/banana.xml
+
 User-agent: Somebot
 Allow: /foo.html
 Crawl-Delay: .3
@@ -463,7 +465,8 @@ Disallow: *
 
 User-agent: AnotherBot
 Disallow:  *
-Sitemap: http://www.example.com/sitemap.xml
+Sitemap: http://www.example.net/sitemap.xml
+Sitemap: http://www.example.com/another_sitemap.xml
 
 User-agent: CamelBot
 Disallow: /foo.html
@@ -480,7 +483,7 @@ assert(parser.is_allowed("Somebot", "/bar.html") == True)
 assert(parser.is_allowed("Somebot", "/x.html") == False)
 assert(parser.get_crawl_delay("Somebot") == .3)
 assert(parser.is_allowed("AnotherBot", "/foo.html") == False)
-assert(parser.sitemap == "http://www.example.com/sitemap.xml")
+assert(parser.sitemaps[1] == "http://www.example.net/sitemap.xml")
 assert(parser.get_crawl_delay("CamelBot") == None)
 
 print("Passed.")
