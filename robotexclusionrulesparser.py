@@ -58,8 +58,14 @@ import urllib2
 import urlparse
 import re
 import time
-import email.utils
 import calendar
+# rfc822 is deprecated since Python 2.3, but the functions I need from it
+# are in email.utils which isn't present until Python 2.5. ???
+try:
+   import email.utils as email_utils
+except ImportError:
+   import rfc822 as email_utils
+
 
 # These are the different robots.txt syntaxes that this module understands. 
 # Hopefully this list will never have more than two elements.
@@ -139,7 +145,117 @@ def _parse_content_type_header(header):
     return media_type.strip(), encoding.strip()
 
     
+class _Ruleset(object):
+    """ _Ruleset represents a set of allow/disallow rules (and possibly a 
+    crawl delay) that apply to a set of user agents.
+    
+    Users of this module don't need this class. It's available at the module
+    level only because RobotExclusionRulesParser() instances can't be 
+    pickled if _Ruleset isn't visible a the module level.    
+    """
+    ALLOW = 1
+    DISALLOW = 2
+
+    def __init__(self):
+        self.robot_names = [ ]
+        self.rules = [ ]
+        self.crawl_delay = None
+
+    def __str__(self):
+        d = { self.ALLOW : "Allow", self.DISALLOW : "Disallow" }
+
+        s = ''.join( ["User-agent: %s\n" % name for name in self.robot_names] )
+
+        if self.crawl_delay:
+            s += "Crawl-delay: %s\n" % self.crawl_delay
+    
+        s += ''.join( ["%s: %s\n" % (d[rule_type], path) for rule_type, path in self.rules] )
+    
+        return s.encode("utf-8")
+
+    def add_robot_name(self, bot):
+        self.robot_names.append(bot)
+    
+    def add_allow_rule(self, path):
+        self.rules.append((self.ALLOW, _unquote_path(path)))
+    
+    def add_disallow_rule(self, path):
+        self.rules.append((self.DISALLOW, _unquote_path(path)))
+    
+    def is_not_empty(self):
+        return bool(len(self.rules)) and bool(len(self.robot_names))
+
+    def is_default(self):
+        return bool('*' in self.robot_names)
+
+    def does_user_agent_match(self, user_agent):
+        match = False
+    
+        for robot_name in self.robot_names:
+            # MK1994 says, "A case insensitive substring match of the name 
+            # without version information is recommended." MK1996 3.2.1 
+            # states it even more strongly: "The robot must obey the first
+            # record in /robots.txt that contains a User-Agent line whose 
+            # value contains the name token of the robot as a substring. 
+            # The name comparisons are case-insensitive."
+            match = match or (robot_name == '*') or  \
+                       (robot_name.lower() in user_agent.lower())
+                
+        return match
+
+    def is_url_allowed(self, url, syntax=GYM2008):
+        allowed = True
+    
+        # Schemes and host names are not part of the robots.txt protocol, 
+        # so  I ignore them. It is the caller's responsibility to make 
+        # sure they match.
+        scheme, host, path, parameters, query, fragment = urlparse.urlparse(url)
+        url = urlparse.urlunparse(("", "", path, parameters, query, fragment))
+
+        url = _unquote_path(url)
+    
+        done = False
+        i = 0
+        while not done:
+            rule_type, path = self.rules[i]
+
+            if (syntax == GYM2008) and ("*" in path or path.endswith("$")):
+                # GYM2008-specific syntax applies here
+                # http://www.google.com/support/webmasters/bin/answer.py?hl=en&answer=40360
+                if path.endswith("$"):
+                    appendix = "$"
+                    path = path[:-1]
+                else:
+                    appendix = ""
+                parts = path.split("*")
+                pattern = "%s%s" % \
+                    (".*".join([re.escape(p) for p in parts]), appendix)
+                if re.match(pattern, url):
+                    # Ding!
+                    done = True
+                    allowed = (rule_type == self.ALLOW)
+            else:  
+                # Wildcards are either not present or are taken literally.
+                if url.startswith(path):
+                    # Ding!
+                    done = True
+                    allowed = (rule_type == self.ALLOW)
+                    # A blank path means "nothing", so that effectively 
+                    # negates the value above. 
+                    # e.g. "Disallow:   " means allow everything
+                    if not path:
+                        allowed = not allowed
+
+
+            i += 1
+            if i == len(self.rules):
+                done = True
+            
+        return allowed
+
+
 class RobotExclusionRulesParser(object):
+    """A parser for robots.txt files."""
     def __init__(self):
         self._source_url = ""
         self.user_agent = None
@@ -150,20 +266,24 @@ class RobotExclusionRulesParser(object):
         self.__rulesets = [ ]
         
 
-    # source_url is read-only.
+    # source_url is read only.
+    __doc = """The URL from which this robots.txt was fetched. Read only."""
     def __get_source_url(self): return self._source_url
     def __set_source_url(self, foo): raise AttributeError, "source_url is read-only"
-    source_url = property(__get_source_url, __set_source_url)
+    source_url = property(__get_source_url, __set_source_url, doc=__doc)
 
     # response_code is read-only.
+    __doc = """The remote server's response code. Read only."""
     def __get_response_code(self): return self._response_code
     def __set_response_code(self, foo): raise AttributeError, "response_code is read-only"
-    response_code = property(__get_response_code, __set_response_code)
+    response_code = property(__get_response_code, __set_response_code, doc=__doc)
                             
     # sitemap is read-only.
+    __doc = """The sitemap URL present in the robots.txt, if any. Defaults 
+    to None. Read only."""
     def __get_sitemap(self): return self._sitemap
     def __set_sitemap(self, foo): raise AttributeError, "sitemap is read-only"
-    sitemap = property(__get_sitemap, __set_sitemap)
+    sitemap = property(__get_sitemap, __set_sitemap, doc=__doc)
                             
 
     def _now(self):
@@ -175,10 +295,18 @@ class RobotExclusionRulesParser(object):
 
 
     def is_expired(self):
+        """True if the difference between now and the last call
+        to fetch() exceeds the robots.txt expiration. 
+        """
         return self.expiration_date <= self._now()     
 
 
     def is_allowed(self, user_agent, url, syntax=GYM2008):
+        """True if the user agent is permitted to visit the URL. The syntax 
+        parameter can be GYM2008 (the default) or MK1996 for strict adherence 
+        to the traditional standard.
+        """
+        
         # The robot rules are stored internally as Unicode. The two lines 
         # below ensure that the parameters passed to this function are also 
         # Unicode. If those lines were not present and the caller passed a 
@@ -190,8 +318,10 @@ class RobotExclusionRulesParser(object):
         # would be confusing. Converting the strings to Unicode here doesn't 
         # make the problem go away but it does make the conversion explicit 
         # so that failures are easier to understand. 
-        if not isinstance(user_agent, unicode): user_agent = unicode(user_agent)
-        if not isinstance(url, unicode): url = unicode(url)
+        if not isinstance(user_agent, unicode): 
+            user_agent = unicode(user_agent)
+        if not isinstance(url, unicode): 
+            url = unicode(url)
         
         if syntax not in (MK1996, GYM2008):
             raise ValueError, "Syntax must be MK1996 or GYM2008"
@@ -204,8 +334,12 @@ class RobotExclusionRulesParser(object):
 
 
     def get_crawl_delay(self, user_agent):
+        """Returns a float representing the crawl delay specified for this 
+        user agent, or None if the crawl delay was unspecified or not a float.
+        """
         # See is_allowed() comment about the explicit unicode conversion.
-        if not isinstance(user_agent, unicode): user_agent = unicode(user_agent)
+        if not isinstance(user_agent, unicode): 
+            user_agent = unicode(user_agent)
     
         for ruleset in self.__rulesets:
             if ruleset.does_user_agent_match(user_agent):
@@ -215,6 +349,10 @@ class RobotExclusionRulesParser(object):
 
 
     def fetch(self, url):
+        """Attempts to fetch the URL requested which should refer to a 
+        robots.txt file, e.g. http://example.com/robots.txt.
+        """
+
         # ISO-8859-1 is the default encoding for text files per the specs for
         # HTTP 1.0 (RFC 1945 sec 3.6.1) and HTTP 1.1 (RFC 2616 sec 3.7.1).
         # ref: http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.7.1
@@ -331,10 +469,12 @@ class RobotExclusionRulesParser(object):
         
         
     def parse(self, s):
+        """Parses the passed string as a set of robots.txt rules."""
         self._sitemap = None
         self.__rulesets = [ ]
         
-        if not isinstance(s, unicode): s = unicode(s, "iso-8859-1")
+        if not isinstance(s, unicode): 
+            s = unicode(s, "iso-8859-1")
     
         # Normalize newlines.
         s = _end_of_line_regex.sub("\n", s)
@@ -349,7 +489,7 @@ class RobotExclusionRulesParser(object):
             
             if line and line[0] == '#':
                 # "Lines containing only a comment are discarded completely, 
-                # and therefore  do not indicate a record boundary." (MK1994)
+                # and therefore do not indicate a record boundary." (MK1994)
                 pass
             else:
                 # Remove comments
@@ -403,7 +543,7 @@ class RobotExclusionRulesParser(object):
                                     # robots.txt listed a UA line but provided
                                     # no name or didn't provide any rules 
                                     # for a named UA.
-                                current_ruleset = self.Ruleset()
+                                current_ruleset = _Ruleset()
                                 if data: 
                                     current_ruleset.add_robot_name(data)
                             
@@ -454,109 +594,10 @@ class RobotExclusionRulesParser(object):
         return s + '\n'.join( [str(ruleset) for ruleset in self.__rulesets] )
 
 
-    class Ruleset(object):
-        ALLOW = 1
-        DISALLOW = 2
-    
-        def __init__(self):
-            self.robot_names = [ ]
-            self.rules = [ ]
-            self.crawl_delay = None
-    
-        def __str__(self):
-            d = { self.ALLOW : "Allow", self.DISALLOW : "Disallow" }
-
-            s = ''.join( ["User-agent: %s\n" % name for name in self.robot_names] )
-
-            if self.crawl_delay:
-                s += "Crawl-delay: %s\n" % self.crawl_delay
-        
-            s += ''.join( ["%s: %s\n" % (d[rule_type], path) for rule_type, path in self.rules] )
-        
-            return s.encode("utf-8")
-    
-        def add_robot_name(self, bot):
-            self.robot_names.append(bot)
-        
-        def add_allow_rule(self, path):
-            self.rules.append((self.ALLOW, _unquote_path(path)))
-        
-        def add_disallow_rule(self, path):
-            self.rules.append((self.DISALLOW, _unquote_path(path)))
-        
-        def is_not_empty(self):
-            return bool(len(self.rules)) and bool(len(self.robot_names))
-    
-        def is_default(self):
-            return bool('*' in self.robot_names)
-    
-        def does_user_agent_match(self, user_agent):
-            match = False
-        
-            for robot_name in self.robot_names:
-                # MK1994 says, "A case insensitive substring match of the name 
-                # without version information is recommended." MK1996 3.2.1 
-                # states it even more strongly: "The robot must obey the first
-                # record in /robots.txt that contains a User-Agent line whose 
-                # value contains the name token of the robot as a substring. 
-                # The name comparisons are case-insensitive."
-                match = match or (robot_name == '*') or  \
-                           (robot_name.lower() in user_agent.lower())
-                    
-            return match
-
-        def is_url_allowed(self, url, syntax=GYM2008):
-            allowed = True
-        
-            # Schemes and host names are not part of the robots.txt protocol, 
-            # so  I ignore them. It is the caller's responsibility to make 
-            # sure they match.
-            scheme, host, path, parameters, query, fragment = urlparse.urlparse(url)
-            url = urlparse.urlunparse(("", "", path, parameters, query, fragment))
-
-            url = _unquote_path(url)
-        
-            done = False
-            i = 0
-            while not done:
-                rule_type, path = self.rules[i]
-
-                if (syntax == GYM2008) and ("*" in path or path.endswith("$")):
-                    # GYM2008-specific syntax applies here
-                    # http://www.google.com/support/webmasters/bin/answer.py?hl=en&answer=40360
-                    if path.endswith("$"):
-                        appendix = "$"
-                        path = path[:-1]
-                    else:
-                        appendix = ""
-                    parts = path.split("*")
-                    pattern = "%s%s" % \
-                        (".*".join([re.escape(p) for p in parts]), appendix)
-                    if re.match(pattern, url):
-                        # Ding!
-                        done = True
-                        allowed = (rule_type == self.ALLOW)
-                else:  
-                    # Wildcards are either not present or are taken literally.
-                    if url.startswith(path):
-                        # Ding!
-                        done = True
-                        allowed = (rule_type == self.ALLOW)
-                        # A blank path means "nothing", so that effectively 
-                        # negates the value above. 
-                        # e.g. "Disallow:   " means allow everything
-                        if not path:
-                            allowed = not allowed
-
-
-                i += 1
-                if i == len(self.rules):
-                    done = True
-                
-            return allowed
-
-
 class RobotFileParserLookalike(RobotExclusionRulesParser):
+    """A drop-in replacement for the Python standard library's RobotFileParser
+    that retains all of the features of RobotExclusionRulesParser.
+    """
     def __init__(self, url = ""):
         RobotExclusionRulesParser.__init__(self)
         

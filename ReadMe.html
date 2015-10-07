@@ -22,15 +22,16 @@
 alternative to and improvement on
 the Python standard library module <tt>robotparser</tt>.
 You can download the full package (containing documentation, unit
-tests, etc.) or just the individual module.
+tests, etc.) or just the individual module. It works with Python 
+2.4 &ndash; 2.6.
 </p>
 
 <p>Full package:
-<a href="robotexclusionrulesparser-1.1.tar.gz">robotexclusionrulesparser-1.1.tar.gz</a> 
-<a href="robotexclusionrulesparser-1.1.md5.txt">[md5 sum]</a>
+<a href="robotexclusionrulesparser-1.2.tar.gz">robotexclusionrulesparser-1.2.tar.gz</a> 
+<a href="robotexclusionrulesparser-1.2.md5.txt">[md5 sum]</a>
 </p>
 <p>Just the module: 
-    <a href="robotexclusionrulesparser-1.1.py">robotexclusionrulesparser-1.1.py</a>
+    <a href="robotexclusionrulesparser-1.2.py">robotexclusionrulesparser-1.2.py</a>
 </p>
 
 <p>This documentation refers to three similar-but-different robots.txt 
@@ -46,15 +47,16 @@ robots.txt standards below</a>.
 is a functional drop-in replacement for the standard library's
 <tt>robotparser.RobotFileParser</tt>. You can also use the slightly nicer
 but different interface exposed by the class 
-<tt>RobotExclusionRulesParser</tt>. Both classes exhibit the differences
-desrcibed below.
+<tt>RobotExclusionRulesParser</tt>. Both classes differ from the 
+Python standard library module as desrcibed below.
 </p>
 
 <ol>
     <li><strong>This module understands the 
         <a href="#gym2008">GYM2008</a> syntax.</strong> GYM2008 
-        is shorthand for the robots.txt syntax extensions (path wildcards and
-        the <tt>Crawl-delay</tt> and <tt>Sitemap</tt> directives) agreed upon by 
+        is shorthand for the robots.txt syntax extensions (path wildcards,
+        the <tt>Crawl-delay</tt> directive and the <tt>Sitemap</tt> directive)
+        agreed upon by 
         <b>G</b>oogle, <b>Y</b>ahoo and <b>M</b>icrosoft in 2008. 
     </li>
     <li><strong>This module accepts non-ASCII characters in
@@ -105,8 +107,8 @@ desrcibed below.
         the Web.
     </li>
     <li>This module's <tt>parse()</tt> function accepts a
-        string; that string can be Unicode. If it isn't Unicode, it's decoded to Unicode
-        using ISO-8859-1.
+        string; that string can be Unicode. If it isn't Unicode, it's converted
+        to Unicode using ISO-8859-1.
     </li>
     <li><strong>This module adds a <tt>response_code</tt> attribute</strong> that 
         reports (what else?) the response code when a robots.txt file is fetched from a 
@@ -209,7 +211,7 @@ else is non-essential. The constructor takes no parameters.
     <dt>source_url</dt>
     <dd>This read-only attribute reports the URL that you used in the most recent call
         to <tt>fetch()</tt>. This is useful when the
-        parser's expiration date passes because you can just call
+        parser's expiration date passes because you can simply call
         <tt>parser.fetch(parser.source_url)</tt> to refresh the parser.
     </dd>
     
@@ -567,7 +569,21 @@ nothing is allowed. Thus, these two rules mean the same thing:
 <h3>Version History</h3>
 
 <ul>
-	<li><strong>Current &ndash; 1.1 (3 March 2009)</strong> &ndash;
+	<li><strong>Current &ndash; 1.2 (27 September 2009)</strong> &ndash;
+	    <ul>
+	        <li>Renamed the <tt>Ruleset</tt> class to <tt>_Ruleset</tt> and 
+	            moved it out of the <tt>RobotExclusionRulesParser</tt> class. 
+	            This move allows parser instances to be pickled. Thanks
+	            to Felipe H. for the bug report.
+	        </li>
+	        <li>Fixed an import problem (introduced in 0.9.6) that prevented
+	            the module from running under Python 2.4.
+	        </li>
+	        <li>Added docstrings.</li>
+	    </ul>
+	</li>
+
+	<li>1.1 (3 March 2009) &ndash;
 	    <ul>
 	        <li>Switched to the Python license.</li>
 	        <li>Added the <tt>RobotFileParserLookalike</tt> class to make
