@@ -332,19 +332,21 @@ class RobotExclusionRulesParser(object):
     @property
     def sitemap(self): 
         """Deprecated; use 'sitemaps' instead. Returns the sitemap URL present
-        in the robots.txt, if any. Defaults to None. Read only. """
+        in the robots.txt, if any. Defaults to None. Read only."""
         _raise_error(DeprecationWarning, "The sitemap property is deprecated. Use 'sitemaps' instead.")
 
     @property
     def sitemaps(self): 
         """The sitemap URLs present in the robots.txt, if any. Defaults 
         to an empty list. Read only."""
-        return self._sitemaps
+        # I return a copy of the list so the caller can manipulate the list
+        # without affecting self._sitemaps.
+        return self._sitemaps[:]
 
     @property
     def is_expired(self):
-        """True if the difference between now and the last call
-        to fetch() exceeds the robots.txt expiration. 
+        """True if the difference between now and the last call to fetch()
+        exceeds the robots.txt expiration. Read only.
         """
         return self.expiration_date <= self._now()     
 

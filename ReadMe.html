@@ -28,25 +28,35 @@
 
 <p><tt>Robotexclusionrulesparser</tt> is a BSD-licensed 
 alternative to and improvement on
-the Python standard library module <tt>robotparser</tt>.
-You can download the full package (containing documentation, unit
-tests, etc.) or just the individual module.</p>
+the Python standard library module <tt>robotparser</tt>. It provides 
+the classes <tt>RobotExclusionRulesParser</tt> and <tt>RobotFileParserLookalike</tt>.
+The latter wraps the former and is a drop-in replacement for the parser in
+Python's standard library.
+</p>
 
 <p><tt>Robotexclusionrulesparser</tt> runs under Python 
-2.4 &ndash; 3.2. It hasn't been tested with Python ≤ 2.4, or &gt; 3.2, but
+2.4 &ndash; 3.3. It hasn't been tested with Python ≤ 2.4, or &gt; 3.3, but
 it might work with those versions.
 </p>
 
+
+<p>You can download the full package (containing documentation, unit
+tests, etc.) or just the individual module.</p>
+
 <p>Full package:
-<a href="robotexclusionrulesparser-1.6.1.tar.gz">robotexclusionrulesparser-1.6.1.tar.gz</a> 
-<a href="robotexclusionrulesparser-1.6.1.md5.txt">[md5 sum]</a>
+<a href="robotexclusionrulesparser-1.6.2.tar.gz">robotexclusionrulesparser-1.6.2.tar.gz</a> 
+<a href="robotexclusionrulesparser-1.6.2.md5.txt">[md5 sum]</a>
 </p>
 <p>Just the module: 
-    <a href="robotexclusionrulesparser-1.6.1.py">robotexclusionrulesparser-1.6.1.py</a>
+    <a href="robotexclusionrulesparser-1.6.2.py">robotexclusionrulesparser-1.6.2.py</a>
 </p>
 
+<p>The exact same <a href="https://pypi.python.org/pypi/robotexclusionrulesparser">
+robotexclusionrulesparser tarball is also available on PyPI.</a></p>
+
+
 <p>This documentation refers to three similar-but-different robots.txt 
-standards called MK1994, MK1996 and GYM2008. In short, the first two
+standards called MK1994, MK1996 and GYM2008. The first two
 comprise the traditional robots.txt standard and the last describes some
 extensions. There's <a href="#standards">details about these
 robots.txt standards below</a>.
@@ -59,7 +69,7 @@ is a functional drop-in replacement for the standard library's
 <tt>robotparser.RobotFileParser</tt>. You can also use the slightly nicer
 but different interface exposed by the class 
 <tt>RobotExclusionRulesParser</tt>. Both classes differ from the 
-Python standard library module as desrcibed below.
+Python standard library module as described below.
 </p>
 
 <ol>
@@ -73,13 +83,15 @@ Python standard library module as desrcibed below.
     <li><strong>This module accepts non-ASCII characters in
         robots.txt.</strong> It decodes the file
         with the encoding specified in the HTTP Content-type header sent with robots.txt file.
-        If no encoding is specified, it defaults to ISO-8859-1 per the HTTP specs.
+        If no encoding is specified, it defaults to ISO-8859-1 per the HTTP 
+        specifications.
     </li>
     <li><strong>This module implements the "Expiration" section
         of MK1996.</strong> Specifically, it looks for an
         HTTP Expires header when fetching robots.txt. If it finds one, it stores that expiration
-        date. Otherwise it uses the MK1996 default of one week. The function
-        <tt>is_expired()</tt> makes use of this date; see <a href="#usage">the
+        date. Otherwise it uses the MK1996 default of one week. The boolean
+        property
+        <tt>is_expired</tt> makes use of this date; see <a href="#usage">the
         usage notes</a> for more information. Consequently, this module dispenses with the
         <tt>modified()</tt> and <tt>mtime()</tt> functions provided by
         <tt>robotparser</tt>. However, I deliberately left the instance variable
@@ -114,8 +126,7 @@ Python standard library module as desrcibed below.
         <p>This module doesn't get confused by BOMs; it simply ignores them.</p>
     </li>
     <li><strong>This module adds a user_agent attribute</strong> that,
-        if populated, is sent in lieu of Python's user agent when fetching robots.txt from
-        the Web.
+        if populated, is sent in lieu of Python's user agent when fetching robots.txt.
     </li>
     <li>This module's <tt>parse()</tt> function accepts a
         string; that string can be Unicode. If it isn't Unicode, it's converted
@@ -130,7 +141,8 @@ Python standard library module as desrcibed below.
     </li>
     <li>There's a bug in <tt>robotparser</tt>'s handling of paths that contain a %-encoded
         forward slash; MK1996 says that they shouldn't be translated but the robotparser module
-        does. This module replaces that bug with newer, more interesting bugs. =)
+        does. This module replaces that bug with newer, more interesting bugs. 
+        <tt>:-)</tt>
     </li>
 </ol>
 
@@ -151,10 +163,10 @@ is the traditional syntax; GYM2008 respects wildcards in paths.
 
 <h3>Usage - Class <tt>RobotExclusionRulesParser</tt></h3>
 
-<p>A <tt>RobotExclusionRulesParser</tt> instance has five functions and 
-five attributes. The most common usage is to call <tt>fetch()</tt> to set up the 
+<p>A <tt>RobotExclusionRulesParser</tt> instance has four functions and 
+seven attributes. The most common usage is to call <tt>fetch()</tt> to set up the 
 parser and then call <tt>is_allowed()</tt>. If your code is long-running, 
-you'll also want to call <tt>is_expired()</tt> occasionally. Everything 
+you'll also want to check <tt>is_expired</tt> occasionally. Everything 
 else is non-essential. The constructor takes no parameters.
 </p>
 
@@ -163,7 +175,8 @@ else is non-essential. The constructor takes no parameters.
 <dl>
     <dt>fetch(url, timeout=None)</dt>
     <dd>Fetch robots.txt from the URL provided and parse it. This method sets
-        the <tt>expiration_date</tt> and <tt>source_url</tt> attributes.
+        <tt>expiration_date</tt>, <tt>source_url</tt>, and
+        <tt>response_code</tt>.
 
         <p>The timeout (supported under Python &gt; 2.5) is a float measured in
         seconds. If a timeout occurs, <tt>urllib2.URLError</tt> is raised under 
@@ -201,75 +214,79 @@ else is non-essential. The constructor takes no parameters.
         </p>
     </dd>
     
-    <dt>is_expired()</dt>
-    <dd><p>Return a boolean indicating whether or not the parser has passed its expiration
-            date (the dreaded "not-so-fresh" feeling). The expiration date is set when you
-            call <tt>fetch()</tt> either by reading the HTTP Expires header or by using
-            a default of seven days. See also the related attributes
-            <tt>expiration_date</tt> and <tt>use_local_time</tt>.
-        </p>
-    </dd>
-
     <dt>get_crawl_delay(user_agent)</dt>
     <dd>Returns the crawl delay for this user agent as a float, or <tt>None</tt>
         if no crawl delay is defined.
     </dd>
 </dl>
 
-<h4>Attributes</h4>
+<h4>Attributes and Properties</h4>
 
 <dl>
     <dt>user_agent</dt>
-    <dd>Send this user agent string to the server when fetching robots.txt. If left blank,
-        Python's default is used.
+    <dd>A read/write string. The parser will send this user agent string to 
+    	the server when fetching robots.txt. If blank or 
+    	<tt>None</tt> (the default), the parser 
+    	uses Python's default user agent string.
     </dd>
     
     <dt>source_url</dt>
-    <dd>This read-only attribute reports the URL that you used in the most recent call
+    <dd>This read-only property reports the URL that you used in the most recent call
         to <tt>fetch()</tt>. This is useful when the
         parser's expiration date passes because you can simply call
         <tt>parser.fetch(parser.source_url)</tt> to refresh the parser.
     </dd>
     
     <dt>use_local_time</dt>
-    <dd>A boolean that tells <tt>RobotExclusionRulesParser</tt> whether
+    <dd>A read/write boolean that tells <tt>RobotExclusionRulesParser</tt> whether
         <tt>expiration_date</tt> should be in local time or UTC (a.k.a. Greenwich
         Mean Time).
         Since <tt>expiration_date</tt> is set when you call <tt>fetch()</tt>, you
         must set <tt>use_local_time</tt> <strong>before</strong> calling
         <tt>fetch()</tt> for it to have any effect.
 
-        <p>If you only call <tt>is_expired()</tt> and never look at
+        <p>If you only check <tt>is_expired</tt> and never look at
         <tt>expiration_date</tt>, you can leave <tt>use_local_time</tt> at its
         default (True).
         </p>
     </dd>
     
+    <dt>is_expired</dt>
+    <dd>A read-only property that contains a boolean indicating whether or not 
+    		the parser has passed its expiration
+            date (the dreaded "not-so-fresh" feeling). The parser sets the
+            expiration date when you
+            call <tt>fetch()</tt> either by reading the HTTP Expires header or by using
+            a default of seven days as specified in MK1996 § 3.4.
+            See also the related attributes
+            <tt>expiration_date</tt> and <tt>use_local_time</tt>.
+    </dd>
+
     <dt>expiration_date</dt>
-    <dd>A timestamp that states when the robots.txt contents are out of date. The timestamp
+    <dd>A read/write timestamp that states when the robots.txt contents are out 
+    	of date. The timestamp
         is a Unix-style timestamp; i.e. a float counting the number of seconds since the
-        epoch. The function <tt>is_expired()</tt> will compare this to "now" for you.
+        epoch. The property <tt>is_expired</tt> will compare this to "now" for you.
     </dd>
     
     <dt>response_code</dt>
-    <dd>The response code received during the last fetch from a remote server, or <tt>None</tt>
+    <dd>A read-only property that contains the integer response code received 
+    	during the last fetch from a remote server, or <tt>None</tt>
         if fetch has not been called. When using Python &le; 2.3, this information is
         less precise. It is set to 200 if the fetch is successful or None otherwise. (Older
-        versions of Python don't provide this information and so I have to fake it.)
-        
-        <p>This attribute is read-only.</p>
+        versions of Python's <tt>urllib</tt> don't provide this information and 
+        so I have to fake it.)
     </dd>
 
     <dt>sitemap</dt>
     <dd>Deprecated. Use <tt>sitemaps</tt> instead.</dd>
 
     <dt>sitemaps</dt>
-    <dd>A list of the sitemap URLs defined in the robots.txt. This module 
+    <dd>A read-only property that returns a list of the sitemap URLs defined in 
+    	the robots.txt. This module 
         simply reports the data it found after the <tt>Sitemap</tt> directives.
         No guarantees are made about
-        whether or not the URLs exist or are valid URLs. 
-        
-        <p>This attribute is read-only and defaults to an empty list.</p>
+        whether or not that data contains valid and/or working URLs. 
     </dd>
 </dl>
 
@@ -355,7 +372,7 @@ specific actions are handled internally&nbsp;&ndash;
 </ul>
 
 <p>If the <tt>RobotExclusionRulesParser</tt> raises a URLError exception that the caller
-decides isn't fatal (e.g. the response code 410 Gone), she can just call
+decides isn't fatal (e.g. the response code <tt>410 Gone</tt>), she can just call
 <tt>parser.parse("")</tt> and use the parser as normal.
 </p>
 
@@ -588,7 +605,22 @@ nothing is allowed. Thus, these two rules mean the same thing:
 <h3>Version History</h3>
 
 <ul>
-    <li><strong>Current &ndash; 1.6.1 (1 September 2012)</strong> &ndash;
+    <li><strong>Current &ndash; 1.6.2 (25 March 2014)</strong> &ndash;
+        <ul>
+            <li>Fixed a number of small documentation errors, including one
+            	pointed out by Dave Challis (thanks). 
+            </li>
+
+            <li>Changed the <tt>sitemaps</tt> property to return a copy of the 
+			parser's list so callers' modifications won't change the 
+			parser's version of the list.
+            </li>
+
+            <li>Made the package pip-friendly by hosting it on PyPI.</li>
+        </ul>
+    </li>
+
+    <li>1.6.1 (1 September 2012) &ndash;
         <ul>
             <li>Fixed a couple of Python 2/3 bugs related to converting parsers
             containing non-ASCII to strings (using <tt>str()</tt> or 

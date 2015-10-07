@@ -4,13 +4,13 @@ import distutils.core as duc
 VERSION = open("VERSION").read().strip()
 
 name = "robotexclusionrulesparser"
-description = "An alternative to Python's robotparser module"
+description = "A robots.txt parser alternative to Python's robotparser module"
 long_description = open("README").read().strip()
-author = "Philip Semanchuk",
-author_email = "philip@semanchuk.com",
-maintainer = "Philip Semanchuk",
-url = "http://nikitathespider.com/python/rerp/",
-download_url = "http://nikitathespider.com/python/rerp/robotexclusionrulesparser-%s.tar.gz" % VERSION,
+author = "Philip Semanchuk"
+author_email = "philip@semanchuk.com"
+maintainer = "Philip Semanchuk"
+url = "http://nikitathespider.com/python/rerp/"
+download_url = "http://nikitathespider.com/python/rerp/robotexclusionrulesparser-%s.tar.gz" % VERSION
 py_modules = ["robotexclusionrulesparser"]
 # http://pypi.python.org/pypi?:action=list_classifiers
 classifiers = [ 'Development Status :: 5 - Production/Stable', 
