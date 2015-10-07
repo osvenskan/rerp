@@ -557,14 +557,13 @@ if RUN_FETCH_TESTS:
     # -----------------------------------------------------------
     print("Testing network fetching. This may take a moment...")
 
+
+    print("Running non-existent URL handling test...")
     try:
-        parser.fetch("http://example.com/robots.txt")
+        parser.fetch("http://SomeLongUrlThatDoesntExistBlahBlahBlah.qwertiop")
     except urllib_error.URLError:
         # Expected
         pass
-
-    print("Passed.")
-
 
     print("Running Fetch and decode (ISO-8859-1) test...")
 

@@ -38,11 +38,11 @@ it might work with those versions.
 </p>
 
 <p>Full package:
-<a href="robotexclusionrulesparser-1.4.0.tar.gz">robotexclusionrulesparser-1.4.0.tar.gz</a> 
-<a href="robotexclusionrulesparser-1.4.0.md5.txt">[md5 sum]</a>
+<a href="robotexclusionrulesparser-1.5.0.tar.gz">robotexclusionrulesparser-1.5.0.tar.gz</a> 
+<a href="robotexclusionrulesparser-1.5.0.md5.txt">[md5 sum]</a>
 </p>
 <p>Just the module: 
-    <a href="robotexclusionrulesparser-1.4.0.py">robotexclusionrulesparser-1.4.0.py</a>
+    <a href="robotexclusionrulesparser-1.5.0.py">robotexclusionrulesparser-1.5.0.py</a>
 </p>
 
 <p>This documentation refers to three similar-but-different robots.txt 
@@ -256,12 +256,15 @@ else is non-essential. The constructor takes no parameters.
     </dd>
 
     <dt>sitemap</dt>
-    <dd>The sitemap URL defined in the robots.txt. This module simply reports 
-        the data it found after the <tt>Sitemap</tt> directive.
+    <dd>Deprecated. Use <tt>sitemaps</tt> instead.</dd>
+
+    <dt>sitemaps</dt>
+    <dd>A list of the sitemap URLs defined in the robots.txt. This module 
+        simply reports the data it found after the <tt>Sitemap</tt> directives.
         No guarantees are made about
-        whether or not the URL exists or is even a valid URL. 
+        whether or not the URLs exist or are valid URLs. 
         
-        <p>This attribute is read-only and defaults to None.</p>
+        <p>This attribute is read-only and defaults to an empty list.</p>
     </dd>
 </dl>
 
@@ -580,16 +583,31 @@ nothing is allowed. Thus, these two rules mean the same thing:
 <h3>Version History</h3>
 
 <ul>
-	<li><strong>Current &ndash; 1.4.0 (8 Nov 2011)</strong> &ndash;
-	    <ul>
-	        <li>Fixed a bug where the parser only read one sitemap URL per
-	            <tt>robots.txt</tt> file. This was wrong; 
-	            <a href="http://www.sitemaps.org/protocol.html#submit_robots">multiple sitemap URLs may be specified</a>.
-	            New code adds the attribute <tt>sitemaps</tt> and 
-	            deprecates <tt>sitemap</tt>. Thanks to Dan Lecocq for the 
-	            bug report.
-	    </ul>
-	</li>
+    <li><strong>Current &ndash; 1.5.0 (16 June 2012)</strong> &ndash;
+        <ul>
+            <li>Fixed a bug where attempting to fetch from non-existent domain
+                would raise a TypeError inside my Python 2/3-compatible 
+                error-raising code. Now it correctly raises 
+                <tt>urllib_error.URLError</tt>. I added a unit test for this 
+                to <tt>parser_test.py</tt>. Thanks to Dave Challis for the 
+                bug report.
+
+                <p>Fixed the documentation (this file) about <tt>sitemap</tt> 
+                which was deprecated in version 1.4 in favor of 
+                <tt>sitemaps</tt>.
+        </ul>
+    </li>
+
+    <li>1.4.0 (8 Nov 2011) &ndash;
+        <ul>
+            <li>Fixed a bug where the parser only read one sitemap URL per
+                <tt>robots.txt</tt> file. This was wrong; 
+                <a href="http://www.sitemaps.org/protocol.html#submit_robots">multiple sitemap URLs may be specified</a>.
+                New code adds the attribute <tt>sitemaps</tt> and 
+                deprecates <tt>sitemap</tt>. Thanks to Dan Lecocq for the 
+                bug report.
+        </ul>
+    </li>
 
 	<li>1.3 (28 March 2010) &ndash;
 	    <ul>
@@ -756,7 +774,7 @@ Parts of this module were inspired (directly and indirectly) by his work.
 <h3>Contact</h3>
 
 <p>
-<a href="mailto:nikitathespider@gmail.com">Comments, bug reports, etc.</a> are most welcome.
+<a href="mailto:philip@semanchuk.com">Comments, bug reports, etc.</a> are most welcome.
 </p>
 
 </body>

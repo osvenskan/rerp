@@ -136,15 +136,23 @@ _control_characters_regex = re.compile(r"""[\000-\037]|\0177""")
 # content-type header.
 _charset_extraction_regex = re.compile(r"""charset=['"]?(?P<encoding>[^'"]*)['"]?""")
 
+# def _raise_error(error, message):
+#     # I have to exec() this code because the Python 2 syntax is invalid
+#     # under Python 3 and vice-versa.
+#     if PY_MAJOR_VERSION == 2:
+#         #raise error, message
+#         s = "raise error, message"
+#     else:
+#         #raise error(message)
+#         s = "raise error(message)"
+        
+#     exec(s)
+
 def _raise_error(error, message):
     # I have to exec() this code because the Python 2 syntax is invalid
     # under Python 3 and vice-versa.
-    if PY_MAJOR_VERSION == 2:
-        #raise error, message
-        s = "raise error, message"
-    else:
-        #raise error(message)
-        s = "raise error(message)"
+    s = "raise "
+    s += "error, message" if (PY_MAJOR_VERSION == 2) else "error(message)" 
         
     exec(s)
 
@@ -314,42 +322,39 @@ class RobotExclusionRulesParser(object):
         self.user_agent = None
         self.use_local_time = True
         self.expiration_date = self._now() + SEVEN_DAYS
-        self._response_code = None
+        self._response_code = 0
         self._sitemaps = [ ]
         self.__rulesets = [ ]
         
 
-    # source_url is read only.
-    __doc = """The URL from which this robots.txt was fetched. Read only."""
-    def __get_source_url(self): return self._source_url
-    def __set_source_url(self, foo): 
-        _raise_error(AttributeError, "source_url is read-only")
-    source_url = property(__get_source_url, __set_source_url, doc=__doc)
+    @property
+    def source_url(self): 
+        """The URL from which this robots.txt was fetched. Read only."""
+        return self._source_url
 
-    # response_code is read-only.
-    __doc = """The remote server's response code. Read only."""
-    def __get_response_code(self): return self._response_code
-    def __set_response_code(self, foo): 
-        _raise_error(AttributeError, "response_code is read-only")
-    response_code = property(__get_response_code, __set_response_code, doc=__doc)
-                            
-    # sitemap is read-only.
-    __doc = """The sitemap URL present in the robots.txt, if any. Defaults 
-    to None. Read only. Deprecated; use 'sitemaps' instead."""
-    def __get_sitemap(self): 
+    @property
+    def response_code(self): 
+        """The remote server's response code. Read only."""
+        return self._response_code
+
+    @property
+    def sitemap(self): 
+        """Deprecated; use 'sitemaps' instead. Returns the sitemap URL present
+        in the robots.txt, if any. Defaults to None. Read only. """
         _raise_error(DeprecationWarning, "The sitemap property is deprecated. Use 'sitemaps' instead.")
-        #return (self._sitemaps[0] if self._sitemaps else None)
-    def __set_sitemap(self, foo):
-        _raise_error(AttributeError, "sitemap is read-only")
-    sitemap = property(__get_sitemap, __set_sitemap, doc=__doc)
 
-    # sitemaps is read-only.
-    __doc = """The sitemap URLs present in the robots.txt, if any. Defaults 
-    to an empty list. Read only."""
-    def __get_sitemaps(self): return self._sitemaps
-    def __set_sitemaps(self, foo):
-        _raise_error(AttributeError, "sitemaps is read-only")
-    sitemaps = property(__get_sitemaps, __set_sitemaps, doc=__doc)
+    @property
+    def sitemaps(self): 
+        """The sitemap URLs present in the robots.txt, if any. Defaults 
+        to an empty list. Read only."""
+        return self._sitemaps
+
+    @property
+    def is_expired(self):
+        """True if the difference between now and the last call
+        to fetch() exceeds the robots.txt expiration. 
+        """
+        return self.expiration_date <= self._now()     
 
 
     def _now(self):
@@ -358,13 +363,6 @@ class RobotExclusionRulesParser(object):
         else:
             # What the heck is timegm() doing in the calendar module?!?
             return calendar.timegm(time.gmtime())
-
-
-    def is_expired(self):
-        """True if the difference between now and the last call
-        to fetch() exceeds the robots.txt expiration. 
-        """
-        return self.expiration_date <= self._now()     
 
 
     def is_allowed(self, user_agent, url, syntax=GYM2008):
@@ -427,7 +425,7 @@ class RobotExclusionRulesParser(object):
         content = ""
         expires_header = None
         content_type_header = None
-        self._response_code = None
+        self._response_code = 0
         self._source_url = url
 
         if self.user_agent:
@@ -435,7 +433,7 @@ class RobotExclusionRulesParser(object):
                                          { 'User-Agent' : self.user_agent })
         else:
             req = urllib_request.Request(url)
-            
+
         try:
             f = urllib_request.urlopen(req)
             content = f.read(MAX_FILESIZE)
@@ -666,10 +664,14 @@ class RobotExclusionRulesParser(object):
 
     
     def __str__(self):
+        return self.__unicode__().encode("utf-8")
+
+
+    def __unicode__(self):
         if self._sitemaps:
-            s = "Sitemaps: %s\n\n" % self._sitemaps
+            s = u"Sitemaps: %s\n\n" % self._sitemaps
         else: 
-            s = ""
+            s = u""
         return s + '\n'.join( [str(ruleset) for ruleset in self.__rulesets] )
 
 
