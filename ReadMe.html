@@ -33,16 +33,16 @@ You can download the full package (containing documentation, unit
 tests, etc.) or just the individual module.</p>
 
 <p><tt>Robotexclusionrulesparser</tt> runs under Python 
-2.4 &ndash; 3.1. It hasn't been tested with Python ≤ 2.4, 3.0, or ≥ 3.2, but
+2.4 &ndash; 3.2. It hasn't been tested with Python ≤ 2.4, or &gt; 3.2, but
 it might work with those versions.
 </p>
 
 <p>Full package:
-<a href="robotexclusionrulesparser-1.5.0.tar.gz">robotexclusionrulesparser-1.5.0.tar.gz</a> 
-<a href="robotexclusionrulesparser-1.5.0.md5.txt">[md5 sum]</a>
+<a href="robotexclusionrulesparser-1.6.0.tar.gz">robotexclusionrulesparser-1.6.0.tar.gz</a> 
+<a href="robotexclusionrulesparser-1.6.0.md5.txt">[md5 sum]</a>
 </p>
 <p>Just the module: 
-    <a href="robotexclusionrulesparser-1.5.0.py">robotexclusionrulesparser-1.5.0.py</a>
+    <a href="robotexclusionrulesparser-1.6.0.py">robotexclusionrulesparser-1.6.0.py</a>
 </p>
 
 <p>This documentation refers to three similar-but-different robots.txt 
@@ -161,9 +161,14 @@ else is non-essential. The constructor takes no parameters.
 <h4>Functions</h4>
 
 <dl>
-    <dt>fetch(url)</dt>
+    <dt>fetch(url, timeout=None)</dt>
     <dd>Fetch robots.txt from the URL provided and parse it. This method sets
         the <tt>expiration_date</tt> and <tt>source_url</tt> attributes.
+
+        <p>The timeout (supported under Python &gt; 2.5) is a float measured in
+        seconds. If a timeout occurs, <tt>urllib2.URLError</tt> is raised under 
+        Python 2 and <tt>socket.timeout</tt> under Python 3.
+        </p>
     </dd>
 
     <dt>parse(content)</dt>
@@ -583,7 +588,17 @@ nothing is allowed. Thus, these two rules mean the same thing:
 <h3>Version History</h3>
 
 <ul>
-    <li><strong>Current &ndash; 1.5.0 (16 June 2012)</strong> &ndash;
+    <li><strong>Current &ndash; 1.6.0 (14 July 2012)</strong> &ndash;
+        <ul>
+            <li>Added an optional timeout parameter to <tt>fetch()</tt>.
+            Thanks to Richard Boulton for the suggestion and patch.
+            </li>
+
+            <li>Fixed a Python 3.x syntax error introduced in version 1.5.</li>
+        </ul>
+    </li>
+
+    <li>1.5.0 (16 June 2012) &ndash;
         <ul>
             <li>Fixed a bug where attempting to fetch from non-existent domain
                 would raise a TypeError inside my Python 2/3-compatible 
@@ -595,6 +610,8 @@ nothing is allowed. Thus, these two rules mean the same thing:
                 <p>Fixed the documentation (this file) about <tt>sitemap</tt> 
                 which was deprecated in version 1.4 in favor of 
                 <tt>sitemaps</tt>.
+                </p>
+            </li>
         </ul>
     </li>
 
@@ -606,6 +623,7 @@ nothing is allowed. Thus, these two rules mean the same thing:
                 New code adds the attribute <tt>sitemaps</tt> and 
                 deprecates <tt>sitemap</tt>. Thanks to Dan Lecocq for the 
                 bug report.
+            </li>
         </ul>
     </li>
 

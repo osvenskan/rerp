@@ -136,17 +136,6 @@ _control_characters_regex = re.compile(r"""[\000-\037]|\0177""")
 # content-type header.
 _charset_extraction_regex = re.compile(r"""charset=['"]?(?P<encoding>[^'"]*)['"]?""")
 
-# def _raise_error(error, message):
-#     # I have to exec() this code because the Python 2 syntax is invalid
-#     # under Python 3 and vice-versa.
-#     if PY_MAJOR_VERSION == 2:
-#         #raise error, message
-#         s = "raise error, message"
-#     else:
-#         #raise error(message)
-#         s = "raise error(message)"
-        
-#     exec(s)
 
 def _raise_error(error, message):
     # I have to exec() this code because the Python 2 syntax is invalid
@@ -413,7 +402,7 @@ class RobotExclusionRulesParser(object):
         return None
 
 
-    def fetch(self, url):
+    def fetch(self, url, timeout=None):
         """Attempts to fetch the URL requested which should refer to a 
         robots.txt file, e.g. http://example.com/robots.txt.
         """
@@ -435,7 +424,11 @@ class RobotExclusionRulesParser(object):
             req = urllib_request.Request(url)
 
         try:
-            f = urllib_request.urlopen(req)
+            if timeout:
+                f = urllib_request.urlopen(req, timeout=timeout)
+            else:
+                f = urllib_request.urlopen(req)
+
             content = f.read(MAX_FILESIZE)
             # As of Python 2.5, f.info() looks like it returns the HTTPMessage
             # object created during the connection. 
@@ -669,9 +662,11 @@ class RobotExclusionRulesParser(object):
 
     def __unicode__(self):
         if self._sitemaps:
-            s = u"Sitemaps: %s\n\n" % self._sitemaps
+            s = "Sitemaps: %s\n\n" % self._sitemaps
         else: 
-            s = u""
+            s = ""
+        if PY_MAJOR_VERSION < 3:
+            s = unicode(s)
         return s + '\n'.join( [str(ruleset) for ruleset in self.__rulesets] )
 
 

@@ -11,6 +11,7 @@ import sys
 PY_MAJOR_VERSION = sys.version_info[0]
 import time
 import calendar
+import socket
 
 if PY_MAJOR_VERSION < 3:
     import robotparser
@@ -694,4 +695,32 @@ if RUN_FETCH_TESTS:
 
     print("Passed.")
 
+
+    # -----------------------------------------------------------
+    # Test the fetch timeout, if possible. It's only supported 
+    # in Python >= 2.6.
+    # -----------------------------------------------------------
+    major, minor = sys.version_info[:2]
+
+    if (major > 2) or (minor > 5):
+        print("Running timeout test 1...")
+        try:
+            parser.fetch("http://NikitaTheSpider.com/python/rerp/sleep3.php", 0.5)
+        except socket.timeout:
+            # This is exactly what's supposed to happen under Python 3.
+            pass
+
+        except urllib_error.URLError:
+            # This is exactly what's supposed to happen under Python 2.
+            pass
+
+        print("Passed.")
+
+
+        print("Running timeout test 2...")
+        parser.fetch("http://NikitaTheSpider.com/python/rerp/sleep3.php", 5)
+
+        print("Passed.")
+    else:
+        print("Skipping fetch timeout tests due to Python version 2.6.")
 
