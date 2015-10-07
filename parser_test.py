@@ -8,24 +8,64 @@ http://NikitaTheSpider.com/python/rerp/
 """
 
 import robotexclusionrulesparser
+import robotparser
 
 import time
 import calendar
 import urllib2
 
 
-# These are disabled by default.
+# These are enabled by default.
 RUN_FETCH_TESTS = True
 
 
-rerp = robotexclusionrulesparser.RobotExclusionRulesParser()
+
+# -----------------------------------------------------------
+# Test the classic parser (no wildcards)
+# -----------------------------------------------------------
+print "Running robotparser comparison test"
+
+parser = robotexclusionrulesparser.RobotFileParserLookalike()
+
+std_lib_parser = robotparser.RobotFileParser()
+
+s = """
+# robots.txt for http://www.example.com/
+
+User-agent: *
+Disallow:    /
+
+User-agent: foobot
+Disallow:
+
+"""
+parser.parse(s)
+
+std_lib_parser.parse(s.split('\n'))
+
+assert(parser.can_fetch("foobot", "/") == std_lib_parser.can_fetch("foobot", "/"))
+assert(parser.can_fetch("Foobot", "/bar.html") == std_lib_parser.can_fetch("Foobot", "/bar.html"))
+assert(parser.can_fetch("SomeOtherBot", "/") == std_lib_parser.can_fetch("SomeOtherBot", "/"))
+assert(parser.can_fetch("SomeOtherBot", "/blahblahblah") == std_lib_parser.can_fetch("SomeOtherBot", "/blahblahblah"))
+
+print "Passed."
+
+# I'm done with this.
+del std_lib_parser
+
+# The remainder of the tests use the standard RobotExclusionRulesParser()
+# rather than the RobotParserLookalike(). They could just as well
+# use RobotParserLookalike(), though, because its methods and attributes are 
+# a superset of RobotExclusionRulesParser()
+
+parser = robotexclusionrulesparser.RobotExclusionRulesParser()
 
 # -----------------------------------------------------------
 # Test the classic parser (no wildcards)
 # -----------------------------------------------------------
 print "Running Classic (MK1994/96) syntax test..."
 
-s ="""
+s = """
 # robots.txt for http://www.example.com/
 
 # In the classic syntax, * is treated literally, not as a wildcard. 
@@ -37,13 +77,13 @@ Disallow: *
 User-agent: barbot
 Disallow: /private/*
 """
-rerp.parse(s)
+parser.parse(s)
 
 # Note how results are completely opposite for the different syntaxes.
-assert(rerp.is_allowed("foobot", "/something.html", robotexclusionrulesparser.MK1996) == True)
-assert(rerp.is_allowed("foobot", "/something.html", robotexclusionrulesparser.GYM2008) == False)
-assert(rerp.is_allowed("barbot", "/private/xyz.html", robotexclusionrulesparser.MK1996) == True)
-assert(rerp.is_allowed("barbot", "/private/xyz.html", robotexclusionrulesparser.GYM2008) == False)
+assert(parser.is_allowed("foobot", "/something.html", robotexclusionrulesparser.MK1996) == True)
+assert(parser.is_allowed("foobot", "/something.html", robotexclusionrulesparser.GYM2008) == False)
+assert(parser.is_allowed("barbot", "/private/xyz.html", robotexclusionrulesparser.MK1996) == True)
+assert(parser.is_allowed("barbot", "/private/xyz.html", robotexclusionrulesparser.GYM2008) == False)
 
 print "Passed."
 
@@ -71,23 +111,23 @@ Disallow: /cyberworld/map/ # This is an infinite virtual URL space
 Disallow: /tmp/ # these will soon disappear
 Disallow: /foo.html
 """
-rerp.parse(s)
+parser.parse(s)
 
-assert(rerp.is_allowed("CrunchyFrogBot", "/") == True)
-assert(rerp.is_allowed("CrunchyFrogBot", "/foo.html") == False)
-assert(rerp.is_allowed("CrunchyFrogBot", "/foo.htm") == True)
-assert(rerp.is_allowed("CrunchyFrogBot", "/foo.shtml") == True)
-assert(rerp.is_allowed("CrunchyFrogBot", "/foo.htmlx") == False)
-assert(rerp.is_allowed("CrunchyFrogBot", "/cyberworld/index.html") == True)
-assert(rerp.is_allowed("CrunchyFrogBot", "/tmp/foo.html") == False)
+assert(parser.is_allowed("CrunchyFrogBot", "/") == True)
+assert(parser.is_allowed("CrunchyFrogBot", "/foo.html") == False)
+assert(parser.is_allowed("CrunchyFrogBot", "/foo.htm") == True)
+assert(parser.is_allowed("CrunchyFrogBot", "/foo.shtml") == True)
+assert(parser.is_allowed("CrunchyFrogBot", "/foo.htmlx") == False)
+assert(parser.is_allowed("CrunchyFrogBot", "/cyberworld/index.html") == True)
+assert(parser.is_allowed("CrunchyFrogBot", "/tmp/foo.html") == False)
 # Since it is the caller's responsibility to make sure the host name 
 # matches, the parser disallows foo.html regardless of what I pass for 
 # host name and protocol.
-assert(rerp.is_allowed("CrunchyFrogBot", "http://example.com/foo.html") == False)
-assert(rerp.is_allowed("CrunchyFrogBot", "http://www.example.com/foo.html") == False)
-assert(rerp.is_allowed("CrunchyFrogBot", "http://www.example.org/foo.html") == False)
-assert(rerp.is_allowed("CrunchyFrogBot", "https://www.example.org/foo.html") == False)
-assert(rerp.is_allowed("CrunchyFrogBot", "ftp://example.net/foo.html") == False)
+assert(parser.is_allowed("CrunchyFrogBot", "http://example.com/foo.html") == False)
+assert(parser.is_allowed("CrunchyFrogBot", "http://www.example.com/foo.html") == False)
+assert(parser.is_allowed("CrunchyFrogBot", "http://www.example.org/foo.html") == False)
+assert(parser.is_allowed("CrunchyFrogBot", "https://www.example.org/foo.html") == False)
+assert(parser.is_allowed("CrunchyFrogBot", "ftp://example.net/foo.html") == False)
 
 print "Passed."
 
@@ -132,24 +172,24 @@ Disallow: /
 
 
 """
-rerp.parse(s)
+parser.parse(s)
 
-assert(rerp.is_allowed("1bot", "/tmp") == True)
-assert(rerp.is_allowed("1bot", "/tmp.html") == True)
-assert(rerp.is_allowed("1bot", "/tmp/a.html") == True)
-assert(rerp.is_allowed("2bot", "/tmp") == False)
-assert(rerp.is_allowed("2bot", "/tmp/") == True)
-assert(rerp.is_allowed("2bot", "/tmp/a.html") == True)
-assert(rerp.is_allowed("3bot", "/a%3cd.html") == True)
-assert(rerp.is_allowed("3bot", "/a%3Cd.html") == True)
-assert(rerp.is_allowed("4bot", "/a%3cd.html") == True)
-assert(rerp.is_allowed("4bot", "/a%3Cd.html") == True)
-assert(rerp.is_allowed("5bot", "/a%2fb.html") == True)
-assert(rerp.is_allowed("5bot", "/a/b.html") == False)
-assert(rerp.is_allowed("6bot", "/a%2fb.html") == False)
-assert(rerp.is_allowed("6bot", "/a/b.html") == True)
-assert(rerp.is_allowed("7bot", "/~joe/index.html") == True)
-assert(rerp.is_allowed("8bot", "/%7Ejoe/index.html") == True)
+assert(parser.is_allowed("1bot", "/tmp") == True)
+assert(parser.is_allowed("1bot", "/tmp.html") == True)
+assert(parser.is_allowed("1bot", "/tmp/a.html") == True)
+assert(parser.is_allowed("2bot", "/tmp") == False)
+assert(parser.is_allowed("2bot", "/tmp/") == True)
+assert(parser.is_allowed("2bot", "/tmp/a.html") == True)
+assert(parser.is_allowed("3bot", "/a%3cd.html") == True)
+assert(parser.is_allowed("3bot", "/a%3Cd.html") == True)
+assert(parser.is_allowed("4bot", "/a%3cd.html") == True)
+assert(parser.is_allowed("4bot", "/a%3Cd.html") == True)
+assert(parser.is_allowed("5bot", "/a%2fb.html") == True)
+assert(parser.is_allowed("5bot", "/a/b.html") == False)
+assert(parser.is_allowed("6bot", "/a%2fb.html") == False)
+assert(parser.is_allowed("6bot", "/a/b.html") == True)
+assert(parser.is_allowed("7bot", "/~joe/index.html") == True)
+assert(parser.is_allowed("8bot", "/%7Ejoe/index.html") == True)
 
 print "Passed."
 
@@ -179,54 +219,54 @@ Allow: /~mak
 Disallow: /
 
 """
-rerp.parse(s)
+parser.parse(s)
 
-assert(rerp.is_allowed("unhipbot", "http://www.example.org/") == False)
-assert(rerp.is_allowed("webcrawler", "http://www.example.org/") == True)
-assert(rerp.is_allowed("excite", "http://www.example.org/") == True)
-assert(rerp.is_allowed("OtherBot", "http://www.example.org/") == False)
-assert(rerp.is_allowed("unhipbot", "http://www.example.org/index.html") == False)
-assert(rerp.is_allowed("webcrawler", "http://www.example.org/index.html") == True)
-assert(rerp.is_allowed("excite", "http://www.example.org/index.html") == True)
-assert(rerp.is_allowed("OtherBot", "http://www.example.org/index.html") == False)
+assert(parser.is_allowed("unhipbot", "http://www.example.org/") == False)
+assert(parser.is_allowed("webcrawler", "http://www.example.org/") == True)
+assert(parser.is_allowed("excite", "http://www.example.org/") == True)
+assert(parser.is_allowed("OtherBot", "http://www.example.org/") == False)
+assert(parser.is_allowed("unhipbot", "http://www.example.org/index.html") == False)
+assert(parser.is_allowed("webcrawler", "http://www.example.org/index.html") == True)
+assert(parser.is_allowed("excite", "http://www.example.org/index.html") == True)
+assert(parser.is_allowed("OtherBot", "http://www.example.org/index.html") == False)
 # Test for robots.txt dropped -- I presume that no one will fetch robots.txt
 # to see if they're allowed to fetch robots.txt. Sheesh...
-#         assert(rerp.is_allowed("unhipbot", "http://www.example.org/robots.txt") == True)
-#         assert(rerp.is_allowed("webcrawler", "http://www.example.org/robots.txt") == True)
-#         assert(rerp.is_allowed("excite", "http://www.example.org/robots.txt") == True)
-#         assert(rerp.is_allowed("OtherBot", "http://www.example.org/robots.txt") == True)
-assert(rerp.is_allowed("unhipbot", "http://www.example.org/server.html") == False)
-assert(rerp.is_allowed("webcrawler", "http://www.example.org/server.html") == True)
-assert(rerp.is_allowed("excite", "http://www.example.org/server.html") == True)
-assert(rerp.is_allowed("OtherBot", "http://www.example.org/server.html") == True)
-assert(rerp.is_allowed("unhipbot", "http://www.example.org/services/fast.html") == False)
-assert(rerp.is_allowed("webcrawler", "http://www.example.org/services/fast.html") == True)
-assert(rerp.is_allowed("excite", "http://www.example.org/services/fast.html") == True)
-assert(rerp.is_allowed("OtherBot", "http://www.example.org/services/fast.html") == True)
-assert(rerp.is_allowed("unhipbot", "http://www.example.org/services/slow.html") == False)
-assert(rerp.is_allowed("webcrawler", "http://www.example.org/services/slow.html") == True)
-assert(rerp.is_allowed("excite", "http://www.example.org/services/slow.html") == True)
-assert(rerp.is_allowed("OtherBot", "http://www.example.org/services/slow.html") == True)
-assert(rerp.is_allowed("unhipbot", "http://www.example.org/orgo.gif") == False)
-assert(rerp.is_allowed("webcrawler", "http://www.example.org/orgo.gif") == True)
-assert(rerp.is_allowed("excite", "http://www.example.org/orgo.gif") == True)
-assert(rerp.is_allowed("OtherBot", "http://www.example.org/orgo.gif") == False)
-assert(rerp.is_allowed("unhipbot", "http://www.example.org/org/about.html") == False)
-assert(rerp.is_allowed("webcrawler", "http://www.example.org/org/about.html") == True)
-assert(rerp.is_allowed("excite", "http://www.example.org/org/about.html") == True)
-assert(rerp.is_allowed("OtherBot", "http://www.example.org/org/about.html") == True)
-assert(rerp.is_allowed("unhipbot", "http://www.example.org/org/plans.html") == False)
-assert(rerp.is_allowed("webcrawler", "http://www.example.org/org/plans.html") == True)
-assert(rerp.is_allowed("excite", "http://www.example.org/org/plans.html") == True)
-assert(rerp.is_allowed("OtherBot", "http://www.example.org/org/plans.html") == False)
-assert(rerp.is_allowed("unhipbot", "http://www.example.org/%7Ejim/jim.html") == False)
-assert(rerp.is_allowed("webcrawler", "http://www.example.org/%7Ejim/jim.html") == True)
-assert(rerp.is_allowed("excite", "http://www.example.org/%7Ejim/jim.html") == True)
-assert(rerp.is_allowed("OtherBot", "http://www.example.org/%7Ejim/jim.html") == False)
-assert(rerp.is_allowed("unhipbot", "http://www.example.org/%7Emak/mak.html") == False)
-assert(rerp.is_allowed("webcrawler", "http://www.example.org/%7Emak/mak.html") == True)
-assert(rerp.is_allowed("excite", "http://www.example.org/%7Emak/mak.html") == True)
-assert(rerp.is_allowed("OtherBot", "http://www.example.org/%7Emak/mak.html") == True)
+#         assert(parser.is_allowed("unhipbot", "http://www.example.org/robots.txt") == True)
+#         assert(parser.is_allowed("webcrawler", "http://www.example.org/robots.txt") == True)
+#         assert(parser.is_allowed("excite", "http://www.example.org/robots.txt") == True)
+#         assert(parser.is_allowed("OtherBot", "http://www.example.org/robots.txt") == True)
+assert(parser.is_allowed("unhipbot", "http://www.example.org/server.html") == False)
+assert(parser.is_allowed("webcrawler", "http://www.example.org/server.html") == True)
+assert(parser.is_allowed("excite", "http://www.example.org/server.html") == True)
+assert(parser.is_allowed("OtherBot", "http://www.example.org/server.html") == True)
+assert(parser.is_allowed("unhipbot", "http://www.example.org/services/fast.html") == False)
+assert(parser.is_allowed("webcrawler", "http://www.example.org/services/fast.html") == True)
+assert(parser.is_allowed("excite", "http://www.example.org/services/fast.html") == True)
+assert(parser.is_allowed("OtherBot", "http://www.example.org/services/fast.html") == True)
+assert(parser.is_allowed("unhipbot", "http://www.example.org/services/slow.html") == False)
+assert(parser.is_allowed("webcrawler", "http://www.example.org/services/slow.html") == True)
+assert(parser.is_allowed("excite", "http://www.example.org/services/slow.html") == True)
+assert(parser.is_allowed("OtherBot", "http://www.example.org/services/slow.html") == True)
+assert(parser.is_allowed("unhipbot", "http://www.example.org/orgo.gif") == False)
+assert(parser.is_allowed("webcrawler", "http://www.example.org/orgo.gif") == True)
+assert(parser.is_allowed("excite", "http://www.example.org/orgo.gif") == True)
+assert(parser.is_allowed("OtherBot", "http://www.example.org/orgo.gif") == False)
+assert(parser.is_allowed("unhipbot", "http://www.example.org/org/about.html") == False)
+assert(parser.is_allowed("webcrawler", "http://www.example.org/org/about.html") == True)
+assert(parser.is_allowed("excite", "http://www.example.org/org/about.html") == True)
+assert(parser.is_allowed("OtherBot", "http://www.example.org/org/about.html") == True)
+assert(parser.is_allowed("unhipbot", "http://www.example.org/org/plans.html") == False)
+assert(parser.is_allowed("webcrawler", "http://www.example.org/org/plans.html") == True)
+assert(parser.is_allowed("excite", "http://www.example.org/org/plans.html") == True)
+assert(parser.is_allowed("OtherBot", "http://www.example.org/org/plans.html") == False)
+assert(parser.is_allowed("unhipbot", "http://www.example.org/%7Ejim/jim.html") == False)
+assert(parser.is_allowed("webcrawler", "http://www.example.org/%7Ejim/jim.html") == True)
+assert(parser.is_allowed("excite", "http://www.example.org/%7Ejim/jim.html") == True)
+assert(parser.is_allowed("OtherBot", "http://www.example.org/%7Ejim/jim.html") == False)
+assert(parser.is_allowed("unhipbot", "http://www.example.org/%7Emak/mak.html") == False)
+assert(parser.is_allowed("webcrawler", "http://www.example.org/%7Emak/mak.html") == True)
+assert(parser.is_allowed("excite", "http://www.example.org/%7Emak/mak.html") == True)
+assert(parser.is_allowed("OtherBot", "http://www.example.org/%7Emak/mak.html") == True)
 
 print "Passed."
 
@@ -238,12 +278,12 @@ print "Passed."
 print "Running Blank test..."
 s = ""
 
-rerp.parse(s)
+parser.parse(s)
 
-assert(rerp.is_allowed("foobot", "/") == True)
-assert(rerp.is_allowed("anybot", "/foo.html") == True)
-assert(rerp.is_allowed("anybot", "/TheGoldenAgeOfBallooning/") == True)
-assert(rerp.is_allowed("anybot", "/TheGoldenAgeOfBallooning/claret.html") == True)
+assert(parser.is_allowed("foobot", "/") == True)
+assert(parser.is_allowed("anybot", "/foo.html") == True)
+assert(parser.is_allowed("anybot", "/TheGoldenAgeOfBallooning/") == True)
+assert(parser.is_allowed("anybot", "/TheGoldenAgeOfBallooning/claret.html") == True)
 
 print "Passed."
 
@@ -257,15 +297,15 @@ s = """%sUSERAGENT: FOOBOT
 %suser-agent:%s%s%sbarbot%s
 disallow: /foo/
 """ % (utf8_byte_order_mark, '\t', '\t', '\t', '\t', chr(0xb))
-rerp.parse(s)
+parser.parse(s)
 
-assert(rerp.is_allowed("foobot", "/") == True)
-assert(rerp.is_allowed("foobot", "/foo/bar.html") == False)
-assert(rerp.is_allowed("AnotherBot", "/foo/bar.html") == True)
-assert(rerp.is_allowed("Foobot Version 1.0", "/foo/bar.html") == False)
-assert(rerp.is_allowed("Mozilla/5.0 (compatible; Foobot/2.1)", "/foo/bar.html") == False)
-assert(rerp.is_allowed("barbot", "/foo/bar.html") == False)
-assert(rerp.is_allowed("barbot", "/tmp/") == True)
+assert(parser.is_allowed("foobot", "/") == True)
+assert(parser.is_allowed("foobot", "/foo/bar.html") == False)
+assert(parser.is_allowed("AnotherBot", "/foo/bar.html") == True)
+assert(parser.is_allowed("Foobot Version 1.0", "/foo/bar.html") == False)
+assert(parser.is_allowed("Mozilla/5.0 (compatible; Foobot/2.1)", "/foo/bar.html") == False)
+assert(parser.is_allowed("barbot", "/foo/bar.html") == False)
+assert(parser.is_allowed("barbot", "/tmp/") == True)
 
 print "Passed."
 
@@ -283,13 +323,13 @@ UserAgent: \u041b\u044c\u0432\u0456\u0432-bot
 Disallow: /totalitarianism/
 
 """
-rerp.parse(s)
+parser.parse(s)
 
-assert(rerp.is_allowed("foobot", "/") == True)
-assert(rerp.is_allowed(u"jävla fanbot", "/foo/bar.html") == True)
-assert(rerp.is_allowed(u"jävla-foobot", "/foo/bar.html") == False)
-assert(rerp.is_allowed(u"Mozilla/5.0 (compatible; \u041b\u044c\u0432\u0456\u0432-bot/1.1)", "/") == True)
-assert(rerp.is_allowed(u"Mozilla/5.0 (compatible; \u041b\u044c\u0432\u0456\u0432-bot/1.1)", "/totalitarianism/foo.htm") == False)
+assert(parser.is_allowed("foobot", "/") == True)
+assert(parser.is_allowed(u"jävla fanbot", "/foo/bar.html") == True)
+assert(parser.is_allowed(u"jävla-foobot", "/foo/bar.html") == False)
+assert(parser.is_allowed(u"Mozilla/5.0 (compatible; \u041b\u044c\u0432\u0456\u0432-bot/1.1)", "/") == True)
+assert(parser.is_allowed(u"Mozilla/5.0 (compatible; \u041b\u044c\u0432\u0456\u0432-bot/1.1)", "/totalitarianism/foo.htm") == False)
 
 print "Passed."
 
@@ -299,7 +339,7 @@ print "Passed."
 # Test the implicit allow rule
 # -----------------------------------------------------------
 print "Running Implicit allow test..."
-s ="""
+s = """
 # robots.txt for http://www.example.com/
 
 User-agent: *
@@ -309,12 +349,12 @@ User-agent: foobot
 Disallow:
 
 """
-rerp.parse(s)
+parser.parse(s)
 
-assert(rerp.is_allowed("foobot", "/") == True)
-assert(rerp.is_allowed("foobot", "/bar.html") == True)
-assert(rerp.is_allowed("SomeOtherBot", "/") == False)
-assert(rerp.is_allowed("SomeOtherBot", "/blahblahblah") == False)
+assert(parser.is_allowed("foobot", "/") == True)
+assert(parser.is_allowed("foobot", "/bar.html") == True)
+assert(parser.is_allowed("SomeOtherBot", "/") == False)
+assert(parser.is_allowed("SomeOtherBot", "/blahblahblah") == False)
 
 print "Passed."
 
@@ -324,7 +364,7 @@ print "Passed."
 # Test the GYM2008-specific syntax (wildcards)
 # -----------------------------------------------------------
 print "Running GYM2008 wildcards test..."
-s ="""
+s = """
 # robots.txt for http://www.example.com/
 
 User-agent: Rule1TestBot
@@ -349,43 +389,43 @@ Allow:  /foo$
 Disallow:  /foo
 
 """
-rerp.parse(s)
+parser.parse(s)
 
-assert(rerp.is_allowed("Rule1TestBot", "/fo.html") == True)
-assert(rerp.is_allowed("Rule1TestBot", "/foo.html") == False) 
-assert(rerp.is_allowed("Rule1TestBot", "/food") == False)
-assert(rerp.is_allowed("Rule1TestBot", "/foo/bar.html") == False)
+assert(parser.is_allowed("Rule1TestBot", "/fo.html") == True)
+assert(parser.is_allowed("Rule1TestBot", "/foo.html") == False) 
+assert(parser.is_allowed("Rule1TestBot", "/food") == False)
+assert(parser.is_allowed("Rule1TestBot", "/foo/bar.html") == False)
 
-assert(rerp.is_allowed("Rule2TestBot", "/fo.html") == True)
-assert(rerp.is_allowed("Rule2TestBot", "/foo/bar.html") == False) 
-assert(rerp.is_allowed("Rule2TestBot", "/food/bar.html") == False) 
-assert(rerp.is_allowed("Rule2TestBot", "/foo/a/b/c/x/y/z/bar.html") == False) 
-assert(rerp.is_allowed("Rule2TestBot", "/food/xyz.html") == True) 
+assert(parser.is_allowed("Rule2TestBot", "/fo.html") == True)
+assert(parser.is_allowed("Rule2TestBot", "/foo/bar.html") == False) 
+assert(parser.is_allowed("Rule2TestBot", "/food/bar.html") == False) 
+assert(parser.is_allowed("Rule2TestBot", "/foo/a/b/c/x/y/z/bar.html") == False) 
+assert(parser.is_allowed("Rule2TestBot", "/food/xyz.html") == True) 
 
-assert(rerp.is_allowed("Rule3TestBot", "/foo.htm") == False) 
-assert(rerp.is_allowed("Rule3TestBot", "/foo.html") == False) 
-assert(rerp.is_allowed("Rule3TestBot", "/foo") == True)
-assert(rerp.is_allowed("Rule3TestBot", "/foom") == False)
-assert(rerp.is_allowed("Rule3TestBot", "/moo") == False)
-assert(rerp.is_allowed("Rule3TestBot", "/foo/bar.html") == False)
-assert(rerp.is_allowed("Rule3TestBot", "/foo/bar.txt") == True)
+assert(parser.is_allowed("Rule3TestBot", "/foo.htm") == False) 
+assert(parser.is_allowed("Rule3TestBot", "/foo.html") == False) 
+assert(parser.is_allowed("Rule3TestBot", "/foo") == True)
+assert(parser.is_allowed("Rule3TestBot", "/foom") == False)
+assert(parser.is_allowed("Rule3TestBot", "/moo") == False)
+assert(parser.is_allowed("Rule3TestBot", "/foo/bar.html") == False)
+assert(parser.is_allowed("Rule3TestBot", "/foo/bar.txt") == True)
 
-assert(rerp.is_allowed("Rule4TestBot", "/fo.html") == False)
-assert(rerp.is_allowed("Rule4TestBot", "/foo.html") == False) 
-assert(rerp.is_allowed("Rule4TestBot", "/foo") == False)
-assert(rerp.is_allowed("Rule4TestBot", "/foo/bar.html") == True)
-assert(rerp.is_allowed("Rule4TestBot", "/foo/bar.txt") == False)
+assert(parser.is_allowed("Rule4TestBot", "/fo.html") == False)
+assert(parser.is_allowed("Rule4TestBot", "/foo.html") == False) 
+assert(parser.is_allowed("Rule4TestBot", "/foo") == False)
+assert(parser.is_allowed("Rule4TestBot", "/foo/bar.html") == True)
+assert(parser.is_allowed("Rule4TestBot", "/foo/bar.txt") == False)
 
-assert(rerp.is_allowed("Rule5TestBot", "/foo/bar.html") == False)
-assert(rerp.is_allowed("Rule5TestBot", "/food/rebar.html") == False)
-assert(rerp.is_allowed("Rule5TestBot", "/food/rebarf.html") == True)
-assert(rerp.is_allowed("Rule5TestBot", "/foo/a/b/c/rebar.html") == False)
-assert(rerp.is_allowed("Rule5TestBot", "/foo/a/b/c/bar.html") == False)
+assert(parser.is_allowed("Rule5TestBot", "/foo/bar.html") == False)
+assert(parser.is_allowed("Rule5TestBot", "/food/rebar.html") == False)
+assert(parser.is_allowed("Rule5TestBot", "/food/rebarf.html") == True)
+assert(parser.is_allowed("Rule5TestBot", "/foo/a/b/c/rebar.html") == False)
+assert(parser.is_allowed("Rule5TestBot", "/foo/a/b/c/bar.html") == False)
 
-assert(rerp.is_allowed("Rule6TestBot", "/foo") == True)
-assert(rerp.is_allowed("Rule6TestBot", "/foo/") == False)
-assert(rerp.is_allowed("Rule6TestBot", "/foo/bar.html") == False)
-assert(rerp.is_allowed("Rule6TestBot", "/fooey") == False)
+assert(parser.is_allowed("Rule6TestBot", "/foo") == True)
+assert(parser.is_allowed("Rule6TestBot", "/foo/") == False)
+assert(parser.is_allowed("Rule6TestBot", "/foo/bar.html") == False)
+assert(parser.is_allowed("Rule6TestBot", "/fooey") == False)
 
 print "Passed."
 
@@ -398,7 +438,7 @@ print "Passed."
 # add tests for bad crawl-delay
 
 print "Running GYM2008 Crawl-delay and sitemap test..."
-s ="""
+s = """
 # robots.txt for http://www.example.com/
 
 User-agent: Foobot
@@ -420,18 +460,18 @@ Disallow: /foo.html
 Crawl-Delay: go away!
 
 """
-rerp.parse(s)
+parser.parse(s)
 
-assert(rerp.is_allowed("Foobot", "/foo.html") == False)
-assert(rerp.get_crawl_delay("Foobot") == 5)
-assert(rerp.get_crawl_delay("Blahbot") == None)
-assert(rerp.is_allowed("Somebot", "/foo.html") == True)
-assert(rerp.is_allowed("Somebot", "/bar.html") == True)
-assert(rerp.is_allowed("Somebot", "/x.html") == False)
-assert(rerp.get_crawl_delay("Somebot") == .3)
-assert(rerp.is_allowed("AnotherBot", "/foo.html") == False)
-assert(rerp.sitemap == "http://www.example.com/sitemap.xml")
-assert(rerp.get_crawl_delay("CamelBot") == None)
+assert(parser.is_allowed("Foobot", "/foo.html") == False)
+assert(parser.get_crawl_delay("Foobot") == 5)
+assert(parser.get_crawl_delay("Blahbot") == None)
+assert(parser.is_allowed("Somebot", "/foo.html") == True)
+assert(parser.is_allowed("Somebot", "/bar.html") == True)
+assert(parser.is_allowed("Somebot", "/x.html") == False)
+assert(parser.get_crawl_delay("Somebot") == .3)
+assert(parser.is_allowed("AnotherBot", "/foo.html") == False)
+assert(parser.sitemap == "http://www.example.com/sitemap.xml")
+assert(parser.get_crawl_delay("CamelBot") == None)
 
 print "Passed."
 
@@ -441,7 +481,7 @@ print "Passed."
 # -----------------------------------------------------------
 print "Running Bad Syntax test..."
 
-s ="""
+s = """
 # robots.txt for http://www.example.com/
 
 # This is nonsense; UA most come first.
@@ -463,14 +503,36 @@ User-agent: ItIsTheRabbitBot
 Disallow: /HolyHandGrenade/
 
 """
-rerp.parse(s)
+parser.parse(s)
 
-assert(rerp.is_allowed("onebot", "/") == True)
-assert(rerp.is_allowed("onebot", "/foo/bar.html") == True)
-assert(rerp.is_allowed("bluebot", "/") == True)
-assert(rerp.is_allowed("bluebot", "/foo/bar.html") == True)
-assert(rerp.is_allowed("OneTwoFiveThreeSirBot", "/HolyHandGrenade/Antioch.html") == True)
-assert(rerp.is_allowed("WotBehindTheRabbitBot", "/HolyHandGrenade/Antioch.html") == False)
+assert(parser.is_allowed("onebot", "/") == True)
+assert(parser.is_allowed("onebot", "/foo/bar.html") == True)
+assert(parser.is_allowed("bluebot", "/") == True)
+assert(parser.is_allowed("bluebot", "/foo/bar.html") == True)
+assert(parser.is_allowed("OneTwoFiveThreeSirBot", "/HolyHandGrenade/Antioch.html") == True)
+assert(parser.is_allowed("WotBehindTheRabbitBot", "/HolyHandGrenade/Antioch.html") == False)
+
+print "Passed."
+
+
+# -----------------------------------------------------------
+# Test case insensitivity
+# -----------------------------------------------------------
+print "Running Case Insensitivity test..."
+
+s = """
+# robots.txt for http://www.example.com/
+
+User-agent: Foobot
+Disallow: /
+
+"""
+parser.parse(s)
+
+assert(parser.is_allowed("Foobot", "/") == False)
+assert(parser.is_allowed("FOOBOT", "/") == False)
+assert(parser.is_allowed("FoOBoT", "/") == False)
+assert(parser.is_allowed("foobot", "/") == False)
 
 print "Passed."
 
@@ -483,7 +545,7 @@ if RUN_FETCH_TESTS:
     print "Testing network fetching. This may take a moment..."
 
     try:
-        rerp.fetch("http://example.com/robots.txt")
+        parser.fetch("http://example.com/robots.txt")
     except urllib2.URLError:
         # Expected
         pass
@@ -493,27 +555,27 @@ if RUN_FETCH_TESTS:
 
     print "Running Fetch and decode (ISO-8859-1) test..."
 
-    rerp.fetch("http://NikitaTheSpider.com/python/rerp/robots.iso-8859-1.txt")
+    parser.fetch("http://NikitaTheSpider.com/python/rerp/robots.iso-8859-1.txt")
 
-    assert(rerp.is_allowed(u"BättreBot", "/stuff") == False)
-    assert(rerp.is_allowed(u"BättreBot", "/index.html") == True)
-    assert(rerp.is_allowed(u"BästaBot", "/stuff") == True)
-    assert(rerp.is_allowed(u"BästaBot", "/index.html") == False)
-    assert(rerp.is_allowed(u"foobot", "/stuff") == True)
-    assert(rerp.is_allowed(u"foobot", "/index.html") == True)
+    assert(parser.is_allowed(u"BättreBot", "/stuff") == False)
+    assert(parser.is_allowed(u"BättreBot", "/index.html") == True)
+    assert(parser.is_allowed(u"BästaBot", "/stuff") == True)
+    assert(parser.is_allowed(u"BästaBot", "/index.html") == False)
+    assert(parser.is_allowed(u"foobot", "/stuff") == True)
+    assert(parser.is_allowed(u"foobot", "/index.html") == True)
 
     print "Passed."
 
 
     print "Running Fetch and decode (UTF-8) test..."
     
-    rerp.fetch("http://NikitaTheSpider.com/python/rerp/robots.utf-8.txt")
-    assert(rerp.is_allowed(u"BättreBot", "/stuff") == False)
-    assert(rerp.is_allowed(u"BättreBot", "/index.html") == True)
-    assert(rerp.is_allowed(u"BästaBot", "/stuff") == True)
-    assert(rerp.is_allowed(u"BästaBot", "/index.html") == False)
-    assert(rerp.is_allowed(u"foobot", "/stuff") == True)
-    assert(rerp.is_allowed(u"foobot", "/index.html") == True)
+    parser.fetch("http://NikitaTheSpider.com/python/rerp/robots.utf-8.txt")
+    assert(parser.is_allowed(u"BättreBot", "/stuff") == False)
+    assert(parser.is_allowed(u"BättreBot", "/index.html") == True)
+    assert(parser.is_allowed(u"BästaBot", "/stuff") == True)
+    assert(parser.is_allowed(u"BästaBot", "/index.html") == False)
+    assert(parser.is_allowed(u"foobot", "/stuff") == True)
+    assert(parser.is_allowed(u"foobot", "/index.html") == True)
     
     print "Passed."
 
@@ -521,10 +583,10 @@ if RUN_FETCH_TESTS:
 
     print "Running 404 handling test..."
 
-    rerp.fetch("http://NikitaTheSpider.com/ThisDirectoryDoesNotExist/robots.txt")
-    assert(rerp.is_allowed("foobot", "/") == True)
-    assert(rerp.is_allowed(u"jävla-foobot", "/stuff") == True)
-    assert(rerp.is_allowed("anybot", "/TotallySecretStuff") == True)
+    parser.fetch("http://NikitaTheSpider.com/ThisDirectoryDoesNotExist/robots.txt")
+    assert(parser.is_allowed("foobot", "/") == True)
+    assert(parser.is_allowed(u"jävla-foobot", "/stuff") == True)
+    assert(parser.is_allowed("anybot", "/TotallySecretStuff") == True)
 
     print "Passed."
 
@@ -534,10 +596,10 @@ if RUN_FETCH_TESTS:
     print "Running 401 test..."
 
     # Fetching this file returns a 401
-    rerp.fetch("http://NikitaTheSpider.com/python/rerp/robots.401.txt")
-    assert(rerp.is_allowed("NigelBot", "/") == False)
-    assert(rerp.is_allowed("StigBot", "/foo/bar.html") == False)
-    assert(rerp.is_allowed("BruceBruceBruceBot", "/index.html") == False)
+    parser.fetch("http://NikitaTheSpider.com/python/rerp/robots.401.txt")
+    assert(parser.is_allowed("NigelBot", "/") == False)
+    assert(parser.is_allowed("StigBot", "/foo/bar.html") == False)
+    assert(parser.is_allowed("BruceBruceBruceBot", "/index.html") == False)
 
     print "Passed."
 
@@ -545,10 +607,10 @@ if RUN_FETCH_TESTS:
     print "Running 403 test..."
 
     # Fetching this file returns a 403
-    rerp.fetch("http://NikitaTheSpider.com/python/rerp/robots.403.txt")
-    assert(rerp.is_allowed("NigelBot", "/") == False)
-    assert(rerp.is_allowed("StigBot", "/foo/bar.html") == False)
-    assert(rerp.is_allowed("BruceBruceBruceBot", "/index.html") == False)
+    parser.fetch("http://NikitaTheSpider.com/python/rerp/robots.403.txt")
+    assert(parser.is_allowed("NigelBot", "/") == False)
+    assert(parser.is_allowed("StigBot", "/foo/bar.html") == False)
+    assert(parser.is_allowed("BruceBruceBruceBot", "/index.html") == False)
 
     print "Passed."
 
@@ -556,10 +618,10 @@ if RUN_FETCH_TESTS:
     print "Running 404 test..."
 
     # Fetching this file returns a 404
-    rerp.fetch("http://NikitaTheSpider.com/python/rerp/robots.404.txt")
-    assert(rerp.is_allowed("NigelBot", "/") == True)
-    assert(rerp.is_allowed("StigBot", "/foo/bar.html") == True)
-    assert(rerp.is_allowed("BruceBruceBruceBot", "/index.html") == True)
+    parser.fetch("http://NikitaTheSpider.com/python/rerp/robots.404.txt")
+    assert(parser.is_allowed("NigelBot", "/") == True)
+    assert(parser.is_allowed("StigBot", "/foo/bar.html") == True)
+    assert(parser.is_allowed("BruceBruceBruceBot", "/index.html") == True)
     
     print "Passed."
     
@@ -568,7 +630,7 @@ if RUN_FETCH_TESTS:
 
     # Fetching this file returns a 500
     try:
-        rerp.fetch("http://NikitaTheSpider.com/python/rerp/robots.500.txt")
+        parser.fetch("http://NikitaTheSpider.com/python/rerp/robots.500.txt")
     except urllib2.URLError:
         # This is exactly what's supposed to happen.
         pass
@@ -584,20 +646,22 @@ if RUN_FETCH_TESTS:
     # the dates are accurate to +/-1 minute. If your local clock is off by 
     # more than that, these tests will fail.
 
-    rerp = robotexclusionrulesparser.RobotExclusionRulesParser()
+    parser = robotexclusionrulesparser.RobotExclusionRulesParser()
     localtime = time.mktime(time.localtime())
-    assert((rerp.expiration_date > localtime + robotexclusionrulesparser.SEVEN_DAYS - 60) and
-           (rerp.expiration_date < localtime + robotexclusionrulesparser.SEVEN_DAYS + 60))
+    assert((parser.expiration_date > localtime + robotexclusionrulesparser.SEVEN_DAYS - 60) and
+           (parser.expiration_date < localtime + robotexclusionrulesparser.SEVEN_DAYS + 60))
 
     print "Passed."
 
 
     print "Running UTC test"
 
-    rerp = robotexclusionrulesparser.RobotExclusionRulesParser()
-    rerp.use_local_time = False
+    parser = robotexclusionrulesparser.RobotExclusionRulesParser()
+    parser.use_local_time = False
     utc = calendar.timegm(time.gmtime())
-    assert((rerp.expiration_date > utc + robotexclusionrulesparser.SEVEN_DAYS - 60) and
-           (rerp.expiration_date < utc + robotexclusionrulesparser.SEVEN_DAYS + 60))
+    assert((parser.expiration_date > utc + robotexclusionrulesparser.SEVEN_DAYS - 60) and
+           (parser.expiration_date < utc + robotexclusionrulesparser.SEVEN_DAYS + 60))
 
     print "Passed."
+
+

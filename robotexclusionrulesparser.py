@@ -5,12 +5,11 @@ Full documentation, examples and a comparison to Python's robotparser module
 reside here:
 http://NikitaTheSpider.com/python/rerp/
 
-This code is released under the GPL v2. 
-http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+This code is released under the Python Software Foundation License:
+http://www.python.org/psf/license/
 
-Comments, bug reports, etc. are most welcome via email to
-   first name @ last name .com
-or use this: 'cGhpbGlwQHNlbWFuY2h1ay5jb20=\n'.decode('base64')
+Comments, bug reports, etc. are most welcome via email to:
+   nikitathespider@gmail.com
 
 Simple usage examples:
 
@@ -555,3 +554,39 @@ class RobotExclusionRulesParser(object):
                     done = True
                 
             return allowed
+
+
+class RobotFileParserLookalike(RobotExclusionRulesParser):
+    def __init__(self, url = ""):
+        RobotExclusionRulesParser.__init__(self)
+        
+        self._user_provided_url = ""
+        self.last_checked = None
+        
+        self.set_url(url)
+
+
+    def set_url(self, url):
+        # I don't want to stuff this into self._source_url because 
+        # _source_url is set only as a side effect of calling fetch().
+        self._user_provided_url = url
+        
+    
+    def read(self):
+        RobotExclusionRulesParser.fetch(self, self._user_provided_url)
+        
+    
+    def parse(self, lines):
+        RobotExclusionRulesParser.parse(self, ''.join(lines))
+
+
+    def can_fetch(self, user_agent, url, syntax=GYM2008):
+        return RobotExclusionRulesParser.is_allowed(self, user_agent, url, syntax)
+
+
+    def mtime(self):
+        return self.last_checked
+
+
+    def modified(self):
+        self.last_checked = time.time()

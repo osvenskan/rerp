@@ -15,14 +15,14 @@ py_modules = ["robotexclusionrulesparser"]
 # http://pypi.python.org/pypi?:action=list_classifiers
 classifiers = [ 'Development Status :: 5 - Production/Stable', 
                 'Intended Audience :: Developers', 
-                'License :: OSI Approved :: GNU General Public License (GPL)',
+                'License :: OSI Approved :: Python Software Foundation License',
                 'Operating System :: MacOS :: MacOS X',
                 'Operating System :: POSIX', 
                 'Operating System :: Unix', 
                 'Environment :: Win32 (MS Windows)',
                 'Programming Language :: Python', 
                 'Topic :: Utilities' ]
-license = "http://www.gnu.org/licenses/old-licenses/gpl-2.0.html"
+license = "http://www.python.org/psf/license/"
 keywords = "robots.txt robot parser"
 
 
