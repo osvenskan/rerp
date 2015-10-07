@@ -38,11 +38,11 @@ it might work with those versions.
 </p>
 
 <p>Full package:
-<a href="robotexclusionrulesparser-1.6.0.tar.gz">robotexclusionrulesparser-1.6.0.tar.gz</a> 
-<a href="robotexclusionrulesparser-1.6.0.md5.txt">[md5 sum]</a>
+<a href="robotexclusionrulesparser-1.6.1.tar.gz">robotexclusionrulesparser-1.6.1.tar.gz</a> 
+<a href="robotexclusionrulesparser-1.6.1.md5.txt">[md5 sum]</a>
 </p>
 <p>Just the module: 
-    <a href="robotexclusionrulesparser-1.6.0.py">robotexclusionrulesparser-1.6.0.py</a>
+    <a href="robotexclusionrulesparser-1.6.1.py">robotexclusionrulesparser-1.6.1.py</a>
 </p>
 
 <p>This documentation refers to three similar-but-different robots.txt 
@@ -588,7 +588,18 @@ nothing is allowed. Thus, these two rules mean the same thing:
 <h3>Version History</h3>
 
 <ul>
-    <li><strong>Current &ndash; 1.6.0 (14 July 2012)</strong> &ndash;
+    <li><strong>Current &ndash; 1.6.1 (1 September 2012)</strong> &ndash;
+        <ul>
+            <li>Fixed a couple of Python 2/3 bugs related to converting parsers
+            containing non-ASCII to strings (using <tt>str()</tt> or 
+            <tt>unicode()</tt>). These didn't affect rule evaluation.
+            </li>
+
+            <li>Fixed a typo in a message in <tt>parser_test.py</tt>.</li>
+        </ul>
+    </li>
+
+    <li>1.6.0 (14 July 2012) &ndash;
         <ul>
             <li>Added an optional timeout parameter to <tt>fetch()</tt>.
             Thanks to Richard Boulton for the suggestion and patch.

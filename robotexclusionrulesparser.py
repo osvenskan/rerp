@@ -40,8 +40,8 @@ this robots.txt.
         pass
 
 
-RobotExclusionRulesParser supports __str()__ so you can print an instance to 
-see the its rules in robots.txt format.
+RobotExclusionRulesParser supports __unicode__() and __str()__ so you can print
+an instance to see the its rules in robots.txt format.
 
 The comments refer to MK1994, MK1996 and GYM2008. These are:
 MK1994 = the 1994 robots.txt draft spec (http://www.robotstxt.org/orig.html)
@@ -208,6 +208,13 @@ class _Ruleset(object):
         self.crawl_delay = None
 
     def __str__(self):
+        s = self.__unicode__()
+        if PY_MAJOR_VERSION == 2:
+            s = s.encode("utf-8")
+
+        return s
+
+    def __unicode__(self):
         d = { self.ALLOW : "Allow", self.DISALLOW : "Disallow" }
 
         s = ''.join( ["User-agent: %s\n" % name for name in self.robot_names] )
@@ -217,11 +224,7 @@ class _Ruleset(object):
     
         s += ''.join( ["%s: %s\n" % (d[rule_type], path) for rule_type, path in self.rules] )
     
-        if PY_MAJOR_VERSION == 2:
-            s = s.encode("utf-8")
-
         return s
-
 
     def add_robot_name(self, bot):
         self.robot_names.append(bot)
@@ -657,8 +660,11 @@ class RobotExclusionRulesParser(object):
 
     
     def __str__(self):
-        return self.__unicode__().encode("utf-8")
+        s = self.__unicode__()
+        if PY_MAJOR_VERSION == 2:
+            s = s.encode("utf-8")
 
+        return s
 
     def __unicode__(self):
         if self._sitemaps:
@@ -667,7 +673,10 @@ class RobotExclusionRulesParser(object):
             s = ""
         if PY_MAJOR_VERSION < 3:
             s = unicode(s)
-        return s + '\n'.join( [str(ruleset) for ruleset in self.__rulesets] )
+        # I also need to string-ify each ruleset. The function for doing so
+        # varies under Python 2/3. 
+        stringify = (unicode if (PY_MAJOR_VERSION == 2) else str)
+        return s + '\n'.join( [stringify(ruleset) for ruleset in self.__rulesets] )
 
 
 class RobotFileParserLookalike(RobotExclusionRulesParser):

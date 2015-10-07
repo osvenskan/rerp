@@ -671,7 +671,7 @@ if RUN_FETCH_TESTS:
     # -----------------------------------------------------------
     # Test the parser's expiration features
     # -----------------------------------------------------------
-    print("Running local time test")
+    print("Running local time test...")
 
     # Create a fresh parser to (re)set the expiration date. I test to see if 
     # the dates are accurate to +/-1 minute. If your local clock is off by 
@@ -685,7 +685,7 @@ if RUN_FETCH_TESTS:
     print("Passed.")
 
 
-    print("Running UTC test")
+    print("Running UTC test...")
 
     parser = robotexclusionrulesparser.RobotExclusionRulesParser()
     parser.use_local_time = False
@@ -722,5 +722,5 @@ if RUN_FETCH_TESTS:
 
         print("Passed.")
     else:
-        print("Skipping fetch timeout tests due to Python version 2.6.")
+        print("Skipping fetch timeout tests due to Python version <= 2.6.")
 
