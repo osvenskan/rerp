@@ -1,0 +1,16 @@
+# This file must be saved with UTF-8 encoding!
+
+User-agent: BättreBot
+Disallow: /stuff
+
+User-agent: BästaBot
+Allow: /stuff
+Disallow: *
+
+User-agent: foobot
+# Disallow nothing means allow everything, so the line below could
+# also be written as "Allow: *". In a real robots.txt file, the syntax below
+# would be safer since it sticks to the traditional syntax.
+Disallow: 
+
+
