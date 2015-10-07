@@ -7,12 +7,19 @@ http://NikitaTheSpider.com/python/rerp/
 
 """
 
-import robotexclusionrulesparser
-import robotparser
-
+import sys
+PY_MAJOR_VERSION = sys.version_info[0]
 import time
 import calendar
-import urllib2
+
+if PY_MAJOR_VERSION < 3:
+    import robotparser
+    import urllib2 as urllib_error
+else:
+    import urllib.robotparser as robotparser
+    import urllib.error as urllib_error
+
+import robotexclusionrulesparser
 
 
 # These are enabled by default.
@@ -23,7 +30,7 @@ RUN_FETCH_TESTS = True
 # -----------------------------------------------------------
 # Test the classic parser (no wildcards)
 # -----------------------------------------------------------
-print "Running robotparser comparison test"
+print("Running robotparser comparison test")
 
 parser = robotexclusionrulesparser.RobotFileParserLookalike()
 
@@ -48,7 +55,7 @@ assert(parser.can_fetch("Foobot", "/bar.html") == std_lib_parser.can_fetch("Foob
 assert(parser.can_fetch("SomeOtherBot", "/") == std_lib_parser.can_fetch("SomeOtherBot", "/"))
 assert(parser.can_fetch("SomeOtherBot", "/blahblahblah") == std_lib_parser.can_fetch("SomeOtherBot", "/blahblahblah"))
 
-print "Passed."
+print("Passed.")
 
 # I'm done with this.
 del std_lib_parser
@@ -63,7 +70,7 @@ parser = robotexclusionrulesparser.RobotExclusionRulesParser()
 # -----------------------------------------------------------
 # Test the classic parser (no wildcards)
 # -----------------------------------------------------------
-print "Running Classic (MK1994/96) syntax test..."
+print("Running Classic (MK1994/96) syntax test...")
 
 s = """
 # robots.txt for http://www.example.com/
@@ -85,7 +92,7 @@ assert(parser.is_allowed("foobot", "/something.html", robotexclusionrulesparser.
 assert(parser.is_allowed("barbot", "/private/xyz.html", robotexclusionrulesparser.MK1996) == True)
 assert(parser.is_allowed("barbot", "/private/xyz.html", robotexclusionrulesparser.GYM2008) == False)
 
-print "Passed."
+print("Passed.")
 
 
 # The remainder of the tests use the default parser which accepts the 
@@ -102,7 +109,7 @@ print "Passed."
 # -----------------------------------------------------------
 # This is the example from mk1994
 # -----------------------------------------------------------
-print "Running MK1994 example test..."
+print("Running MK1994 example test...")
 s = """
 # robots.txt for http://www.example.com/
 
@@ -129,12 +136,12 @@ assert(parser.is_allowed("CrunchyFrogBot", "http://www.example.org/foo.html") ==
 assert(parser.is_allowed("CrunchyFrogBot", "https://www.example.org/foo.html") == False)
 assert(parser.is_allowed("CrunchyFrogBot", "ftp://example.net/foo.html") == False)
 
-print "Passed."
+print("Passed.")
 
 # -----------------------------------------------------------
 # This is the example A from MK1996
 # -----------------------------------------------------------
-print "Running Allows based on MK1996 example A test..."
+print("Running Allows based on MK1996 example A test...")
 s = """
 # robots.txt for http://www.example.com/
 
@@ -191,7 +198,7 @@ assert(parser.is_allowed("6bot", "/a/b.html") == True)
 assert(parser.is_allowed("7bot", "/~joe/index.html") == True)
 assert(parser.is_allowed("8bot", "/%7Ejoe/index.html") == True)
 
-print "Passed."
+print("Passed.")
 
 
 
@@ -199,7 +206,7 @@ print "Passed."
 # This is the example B from MK1996 with the domain 
 # changed to example.org 
 # -----------------------------------------------------------
-print "Running MK1996 example B test..."
+print("Running MK1996 example B test...")
 s = """
 # /robots.txt for http://www.example.org/
 # comments to webmaster@example.org
@@ -268,14 +275,14 @@ assert(parser.is_allowed("webcrawler", "http://www.example.org/%7Emak/mak.html")
 assert(parser.is_allowed("excite", "http://www.example.org/%7Emak/mak.html") == True)
 assert(parser.is_allowed("OtherBot", "http://www.example.org/%7Emak/mak.html") == True)
 
-print "Passed."
+print("Passed.")
 
 
 
 # -----------------------------------------------------------
 # Test a blank (or non-existent) robots.txt
 # -----------------------------------------------------------
-print "Running Blank test..."
+print("Running Blank test...")
 s = ""
 
 parser.parse(s)
@@ -285,12 +292,12 @@ assert(parser.is_allowed("anybot", "/foo.html") == True)
 assert(parser.is_allowed("anybot", "/TheGoldenAgeOfBallooning/") == True)
 assert(parser.is_allowed("anybot", "/TheGoldenAgeOfBallooning/claret.html") == True)
 
-print "Passed."
+print("Passed.")
 
 # -----------------------------------------------------------
 # Test the parser's generosity
 # -----------------------------------------------------------
-print "Running generosity test..."
+print("Running generosity test...")
 
 utf8_byte_order_mark = chr(0xef) + chr(0xbb) + chr(0xbf)
 s = """%sUSERAGENT: FOOBOT
@@ -307,14 +314,14 @@ assert(parser.is_allowed("Mozilla/5.0 (compatible; Foobot/2.1)", "/foo/bar.html"
 assert(parser.is_allowed("barbot", "/foo/bar.html") == False)
 assert(parser.is_allowed("barbot", "/tmp/") == True)
 
-print "Passed."
+print("Passed.")
 
 
 # -----------------------------------------------------------
 # Test the parser's ability to handle non-ASCII
 # -----------------------------------------------------------
-print "Running Non-ASCII test..."
-s = u"""# robots.txt for http://www.example.com/
+print("Running Non-ASCII test...")
+s = """# robots.txt for http://www.example.com/
 
 UserAgent: Jävla-Foobot
 Disallow: /
@@ -323,22 +330,27 @@ UserAgent: \u041b\u044c\u0432\u0456\u0432-bot
 Disallow: /totalitarianism/
 
 """
+if PY_MAJOR_VERSION < 3:
+    s = s.decode("utf-8")
 parser.parse(s)
 
+user_agent = "jävla-fanbot"
+if PY_MAJOR_VERSION < 3:
+    user_agent = user_agent.decode("utf-8")
+assert(parser.is_allowed(user_agent, "/foo/bar.html") == True)
+assert(parser.is_allowed(user_agent.replace("fan", "foo"), "/foo/bar.html") == False)
 assert(parser.is_allowed("foobot", "/") == True)
-assert(parser.is_allowed(u"jävla fanbot", "/foo/bar.html") == True)
-assert(parser.is_allowed(u"jävla-foobot", "/foo/bar.html") == False)
-assert(parser.is_allowed(u"Mozilla/5.0 (compatible; \u041b\u044c\u0432\u0456\u0432-bot/1.1)", "/") == True)
-assert(parser.is_allowed(u"Mozilla/5.0 (compatible; \u041b\u044c\u0432\u0456\u0432-bot/1.1)", "/totalitarianism/foo.htm") == False)
+assert(parser.is_allowed("Mozilla/5.0 (compatible; \u041b\u044c\u0432\u0456\u0432-bot/1.1)", "/") == True)
+assert(parser.is_allowed("Mozilla/5.0 (compatible; \u041b\u044c\u0432\u0456\u0432-bot/1.1)", "/totalitarianism/foo.htm") == False)
 
-print "Passed."
+print("Passed.")
 
 
 
 # -----------------------------------------------------------
 # Test the implicit allow rule
 # -----------------------------------------------------------
-print "Running Implicit allow test..."
+print("Running Implicit allow test...")
 s = """
 # robots.txt for http://www.example.com/
 
@@ -356,14 +368,14 @@ assert(parser.is_allowed("foobot", "/bar.html") == True)
 assert(parser.is_allowed("SomeOtherBot", "/") == False)
 assert(parser.is_allowed("SomeOtherBot", "/blahblahblah") == False)
 
-print "Passed."
+print("Passed.")
 
 
 
 # -----------------------------------------------------------
 # Test the GYM2008-specific syntax (wildcards)
 # -----------------------------------------------------------
-print "Running GYM2008 wildcards test..."
+print("Running GYM2008 wildcards test...")
 s = """
 # robots.txt for http://www.example.com/
 
@@ -427,7 +439,7 @@ assert(parser.is_allowed("Rule6TestBot", "/foo/") == False)
 assert(parser.is_allowed("Rule6TestBot", "/foo/bar.html") == False)
 assert(parser.is_allowed("Rule6TestBot", "/fooey") == False)
 
-print "Passed."
+print("Passed.")
 
 
 
@@ -435,9 +447,7 @@ print "Passed."
 # Test the GYM2008-specific syntax (crawl-delays and sitemap)
 # -----------------------------------------------------------
 
-# add tests for bad crawl-delay
-
-print "Running GYM2008 Crawl-delay and sitemap test..."
+print("Running GYM2008 Crawl-delay and sitemap test...")
 s = """
 # robots.txt for http://www.example.com/
 
@@ -473,13 +483,13 @@ assert(parser.is_allowed("AnotherBot", "/foo.html") == False)
 assert(parser.sitemap == "http://www.example.com/sitemap.xml")
 assert(parser.get_crawl_delay("CamelBot") == None)
 
-print "Passed."
+print("Passed.")
 
 
 # -----------------------------------------------------------
 # Test handling of bad syntax
 # -----------------------------------------------------------
-print "Running Bad Syntax test..."
+print("Running Bad Syntax test...")
 
 s = """
 # robots.txt for http://www.example.com/
@@ -512,13 +522,13 @@ assert(parser.is_allowed("bluebot", "/foo/bar.html") == True)
 assert(parser.is_allowed("OneTwoFiveThreeSirBot", "/HolyHandGrenade/Antioch.html") == True)
 assert(parser.is_allowed("WotBehindTheRabbitBot", "/HolyHandGrenade/Antioch.html") == False)
 
-print "Passed."
+print("Passed.")
 
 
 # -----------------------------------------------------------
 # Test case insensitivity
 # -----------------------------------------------------------
-print "Running Case Insensitivity test..."
+print("Running Case Insensitivity test...")
 
 s = """
 # robots.txt for http://www.example.com/
@@ -534,7 +544,7 @@ assert(parser.is_allowed("FOOBOT", "/") == False)
 assert(parser.is_allowed("FoOBoT", "/") == False)
 assert(parser.is_allowed("foobot", "/") == False)
 
-print "Passed."
+print("Passed.")
 
 
 
@@ -542,58 +552,76 @@ if RUN_FETCH_TESTS:
     # -----------------------------------------------------------
     # Test the parser's ability to fetch and decode files from the Net
     # -----------------------------------------------------------
-    print "Testing network fetching. This may take a moment..."
+    print("Testing network fetching. This may take a moment...")
 
     try:
         parser.fetch("http://example.com/robots.txt")
-    except urllib2.URLError:
+    except urllib_error.URLError:
         # Expected
         pass
 
-    print "Passed."
+    print("Passed.")
 
 
-    print "Running Fetch and decode (ISO-8859-1) test..."
+    print("Running Fetch and decode (ISO-8859-1) test...")
 
     parser.fetch("http://NikitaTheSpider.com/python/rerp/robots.iso-8859-1.txt")
+    
+    user_agent = "BättreBot"
+    if PY_MAJOR_VERSION < 3:
+        user_agent = user_agent.decode("utf-8")
 
-    assert(parser.is_allowed(u"BättreBot", "/stuff") == False)
-    assert(parser.is_allowed(u"BättreBot", "/index.html") == True)
-    assert(parser.is_allowed(u"BästaBot", "/stuff") == True)
-    assert(parser.is_allowed(u"BästaBot", "/index.html") == False)
-    assert(parser.is_allowed(u"foobot", "/stuff") == True)
-    assert(parser.is_allowed(u"foobot", "/index.html") == True)
+    assert(parser.is_allowed(user_agent, "/stuff") == False)
+    assert(parser.is_allowed(user_agent, "/index.html") == True)
 
-    print "Passed."
+    user_agent = "BästaBot"
+    if PY_MAJOR_VERSION < 3:
+        user_agent = user_agent.decode("utf-8")
+    
+    assert(parser.is_allowed(user_agent, "/stuff") == True)
+    assert(parser.is_allowed(user_agent, "/index.html") == False)
+    assert(parser.is_allowed("foobot", "/stuff") == True)
+    assert(parser.is_allowed("foobot", "/index.html") == True)
+
+    print("Passed.")
 
 
-    print "Running Fetch and decode (UTF-8) test..."
+    print("Running Fetch and decode (UTF-8) test...")
     
     parser.fetch("http://NikitaTheSpider.com/python/rerp/robots.utf-8.txt")
-    assert(parser.is_allowed(u"BättreBot", "/stuff") == False)
-    assert(parser.is_allowed(u"BättreBot", "/index.html") == True)
-    assert(parser.is_allowed(u"BästaBot", "/stuff") == True)
-    assert(parser.is_allowed(u"BästaBot", "/index.html") == False)
-    assert(parser.is_allowed(u"foobot", "/stuff") == True)
-    assert(parser.is_allowed(u"foobot", "/index.html") == True)
+    user_agent = "BättreBot"
+    if PY_MAJOR_VERSION < 3:
+        user_agent = user_agent.decode("utf-8")
+        
+    parser.is_allowed(user_agent, "/stuff")
+        
+    assert(parser.is_allowed(user_agent, "/stuff") == False)
+    assert(parser.is_allowed(user_agent, "/index.html") == True)
+    user_agent = "BästaBot"
+    if PY_MAJOR_VERSION < 3:
+        user_agent = user_agent.decode("utf-8")
+    assert(parser.is_allowed(user_agent, "/stuff") == True)
+    assert(parser.is_allowed(user_agent, "/index.html") == False)
+    assert(parser.is_allowed("foobot", "/stuff") == True)
+    assert(parser.is_allowed("foobot", "/index.html") == True)
     
-    print "Passed."
+    print("Passed.")
 
 
 
-    print "Running 404 handling test..."
+    print("Running 404 handling test...")
 
     parser.fetch("http://NikitaTheSpider.com/ThisDirectoryDoesNotExist/robots.txt")
     assert(parser.is_allowed("foobot", "/") == True)
-    assert(parser.is_allowed(u"jävla-foobot", "/stuff") == True)
+    assert(parser.is_allowed("javla-foobot", "/stuff") == True)
     assert(parser.is_allowed("anybot", "/TotallySecretStuff") == True)
 
-    print "Passed."
+    print("Passed.")
 
     # -----------------------------------------------------------
     # Test the parser's ability to handle non-200 response codes
     # -----------------------------------------------------------
-    print "Running 401 test..."
+    print("Running 401 test...")
 
     # Fetching this file returns a 401
     parser.fetch("http://NikitaTheSpider.com/python/rerp/robots.401.txt")
@@ -601,10 +629,10 @@ if RUN_FETCH_TESTS:
     assert(parser.is_allowed("StigBot", "/foo/bar.html") == False)
     assert(parser.is_allowed("BruceBruceBruceBot", "/index.html") == False)
 
-    print "Passed."
+    print("Passed.")
 
 
-    print "Running 403 test..."
+    print("Running 403 test...")
 
     # Fetching this file returns a 403
     parser.fetch("http://NikitaTheSpider.com/python/rerp/robots.403.txt")
@@ -612,10 +640,10 @@ if RUN_FETCH_TESTS:
     assert(parser.is_allowed("StigBot", "/foo/bar.html") == False)
     assert(parser.is_allowed("BruceBruceBruceBot", "/index.html") == False)
 
-    print "Passed."
+    print("Passed.")
 
 
-    print "Running 404 test..."
+    print("Running 404 test...")
 
     # Fetching this file returns a 404
     parser.fetch("http://NikitaTheSpider.com/python/rerp/robots.404.txt")
@@ -623,24 +651,24 @@ if RUN_FETCH_TESTS:
     assert(parser.is_allowed("StigBot", "/foo/bar.html") == True)
     assert(parser.is_allowed("BruceBruceBruceBot", "/index.html") == True)
     
-    print "Passed."
+    print("Passed.")
     
 
-    print "Running 500 test..."
+    print("Running 500 test...")
 
     # Fetching this file returns a 500
     try:
         parser.fetch("http://NikitaTheSpider.com/python/rerp/robots.500.txt")
-    except urllib2.URLError:
+    except urllib_error.URLError:
         # This is exactly what's supposed to happen.
         pass
     
-    print "Passed."
+    print("Passed.")
 
     # -----------------------------------------------------------
     # Test the parser's expiration features
     # -----------------------------------------------------------
-    print "Running local time test"
+    print("Running local time test")
 
     # Create a fresh parser to (re)set the expiration date. I test to see if 
     # the dates are accurate to +/-1 minute. If your local clock is off by 
@@ -651,10 +679,10 @@ if RUN_FETCH_TESTS:
     assert((parser.expiration_date > localtime + robotexclusionrulesparser.SEVEN_DAYS - 60) and
            (parser.expiration_date < localtime + robotexclusionrulesparser.SEVEN_DAYS + 60))
 
-    print "Passed."
+    print("Passed.")
 
 
-    print "Running UTC test"
+    print("Running UTC test")
 
     parser = robotexclusionrulesparser.RobotExclusionRulesParser()
     parser.use_local_time = False
@@ -662,6 +690,6 @@ if RUN_FETCH_TESTS:
     assert((parser.expiration_date > utc + robotexclusionrulesparser.SEVEN_DAYS - 60) and
            (parser.expiration_date < utc + robotexclusionrulesparser.SEVEN_DAYS + 60))
 
-    print "Passed."
+    print("Passed.")
 
 
