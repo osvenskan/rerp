@@ -52,7 +52,7 @@ GYM2008 = the Google-Yahoo-Microsoft extensions announced in 2008
 
 This code is released under the following BSD license --
 
-Copyright (c) 2010, Philip Semanchuk
+Copyright (c) 2015, Philip Semanchuk
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-
 import sys
 PY_MAJOR_VERSION = sys.version_info[0]
 
@@ -100,10 +99,12 @@ import calendar
 # rfc822 is deprecated since Python 2.3, but the functions I need from it
 # are in email.utils which isn't present until Python 2.5. ???
 try:
-   import email.utils as email_utils
+    import email.utils as email_utils
 except ImportError:
-   import rfc822 as email_utils
+    import rfc822 as email_utils
 
+# flake8 note -- under Python3, flake8 complains about 'unicode' references so a couple of lines
+# here are noqa-ed to make flake8 happy.
 
 # These are the different robots.txt syntaxes that this module understands.
 # Hopefully this list will never have more than two elements.
@@ -117,7 +118,8 @@ _end_of_line_regex = re.compile(r"(?:\r\n)|\r|\n")
 # former. The regex also doesn't insist that "useragent" is at the exact
 # beginning of the line, which makes this code immune to confusion caused
 # by byte order markers.
-_directive_regex = re.compile("(allow|disallow|user[-]?agent|sitemap|crawl-delay):[ \t]*(.*)", re.IGNORECASE)
+_directive_regex = re.compile("(allow|disallow|user[-]?agent|sitemap|crawl-delay):[ \t]*(.*)",
+                              re.IGNORECASE)
 
 # This is the number of seconds in a week that I use to determine the default
 # expiration date defined in MK1996.
@@ -203,8 +205,8 @@ class _Ruleset(object):
     DISALLOW = 2
 
     def __init__(self):
-        self.robot_names = [ ]
-        self.rules = [ ]
+        self.robot_names = []
+        self.rules = []
         self.crawl_delay = None
 
     def __str__(self):
@@ -215,14 +217,14 @@ class _Ruleset(object):
         return s
 
     def __unicode__(self):
-        d = { self.ALLOW : "Allow", self.DISALLOW : "Disallow" }
+        d = {self.ALLOW: "Allow", self.DISALLOW: "Disallow"}
 
-        s = ''.join( ["User-agent: %s\n" % name for name in self.robot_names] )
+        s = ''.join(["User-agent: %s\n" % name for name in self.robot_names])
 
         if self.crawl_delay:
             s += "Crawl-delay: %s\n" % self.crawl_delay
 
-        s += ''.join( ["%s: %s\n" % (d[rule_type], path) for rule_type, path in self.rules] )
+        s += ''.join(["%s: %s\n" % (d[rule_type], path) for rule_type, path in self.rules])
 
         return s
 
@@ -299,7 +301,6 @@ class _Ruleset(object):
                     if not path:
                         allowed = not allowed
 
-
             i += 1
             if i == len(self.rules):
                 done = True
@@ -315,9 +316,8 @@ class RobotExclusionRulesParser(object):
         self.use_local_time = True
         self.expiration_date = self._now() + SEVEN_DAYS
         self._response_code = 0
-        self._sitemaps = [ ]
-        self.__rulesets = [ ]
-
+        self._sitemaps = []
+        self.__rulesets = []
 
     @property
     def source_url(self):
@@ -333,7 +333,8 @@ class RobotExclusionRulesParser(object):
     def sitemap(self):
         """Deprecated; use 'sitemaps' instead. Returns the sitemap URL present
         in the robots.txt, if any. Defaults to None. Read only."""
-        _raise_error(DeprecationWarning, "The sitemap property is deprecated. Use 'sitemaps' instead.")
+        _raise_error(DeprecationWarning,
+                     "The sitemap property is deprecated. Use 'sitemaps' instead.")
 
     @property
     def sitemaps(self):
@@ -350,14 +351,12 @@ class RobotExclusionRulesParser(object):
         """
         return self.expiration_date <= self._now()
 
-
     def _now(self):
         if self.use_local_time:
             return time.time()
         else:
             # What the heck is timegm() doing in the calendar module?!?
             return calendar.timegm(time.gmtime())
-
 
     def is_allowed(self, user_agent, url, syntax=GYM2008):
         """True if the user agent is permitted to visit the URL. The syntax
@@ -377,9 +376,9 @@ class RobotExclusionRulesParser(object):
             # Converting the strings to Unicode here doesn't make the problem
             # go away but it does make the conversion explicit so that
             # failures are easier to understand.
-            if not isinstance(user_agent, unicode):
+            if not isinstance(user_agent, unicode):  # noqa
                 user_agent = user_agent.decode()
-            if not isinstance(url, unicode):
+            if not isinstance(url, unicode):  # noqa
                 url = url.decode()
 
         if syntax not in (MK1996, GYM2008):
@@ -391,13 +390,12 @@ class RobotExclusionRulesParser(object):
 
         return True
 
-
     def get_crawl_delay(self, user_agent):
         """Returns a float representing the crawl delay specified for this
         user agent, or None if the crawl delay was unspecified or not a float.
         """
         # See is_allowed() comment about the explicit unicode conversion.
-        if (PY_MAJOR_VERSION < 3) and (not isinstance(user_agent, unicode)):
+        if (PY_MAJOR_VERSION < 3) and (not isinstance(user_agent, unicode)):  # noqa
             user_agent = user_agent.decode()
 
         for ruleset in self.__rulesets:
@@ -406,12 +404,10 @@ class RobotExclusionRulesParser(object):
 
         return None
 
-
     def fetch(self, url, timeout=None):
         """Attempts to fetch the URL requested which should refer to a
         robots.txt file, e.g. http://example.com/robots.txt.
         """
-
         # ISO-8859-1 is the default encoding for text files per the specs for
         # HTTP 1.0 (RFC 1945 sec 3.6.1) and HTTP 1.1 (RFC 2616 sec 3.7.1).
         # ref: http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.7.1
@@ -423,8 +419,7 @@ class RobotExclusionRulesParser(object):
         self._source_url = url
 
         if self.user_agent:
-            req = urllib_request.Request(url, None,
-                                         { 'User-Agent' : self.user_agent })
+            req = urllib_request.Request(url, None, {'User-Agent': self.user_agent})
         else:
             req = urllib_request.Request(url)
 
@@ -484,7 +479,7 @@ class RobotExclusionRulesParser(object):
                     # convert a time zone of None to zero. It's much more
                     # difficult to explain than to fix. =)
                     # ref: http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.3.1
-                    if self.expiration_date[9] == None:
+                    if self.expiration_date[9] is None:
                         self.expiration_date = self.expiration_date[:9] + (0,)
 
                     self.expiration_date = email_utils.mktime_tz(self.expiration_date)
@@ -492,10 +487,11 @@ class RobotExclusionRulesParser(object):
                         # I have to do a little more converting to get this
                         # UTC timestamp into localtime.
                         self.expiration_date = time.mktime(time.gmtime(self.expiration_date))
-                #else:
+                # else:
                     # The expires header was garbage.
 
-        if not self.expiration_date: self.expiration_date = self._now() + SEVEN_DAYS
+        if not self.expiration_date:
+            self.expiration_date = self._now() + SEVEN_DAYS
 
         if (self._response_code >= 200) and (self._response_code < 300):
             # All's well.
@@ -519,7 +515,7 @@ class RobotExclusionRulesParser(object):
             _raise_error(urllib_error.URLError, self._response_code)
 
         if ((PY_MAJOR_VERSION == 2) and isinstance(content, str)) or \
-           ((PY_MAJOR_VERSION > 2)  and (not isinstance(content, str))):
+           ((PY_MAJOR_VERSION > 2) and (not isinstance(content, str))):
             # This ain't Unicode yet! It needs to be.
 
             # Unicode decoding errors are another point of failure that I punt
@@ -527,28 +523,27 @@ class RobotExclusionRulesParser(object):
             try:
                 content = content.decode(encoding)
             except UnicodeError:
-                _raise_error(UnicodeError,
-                "Robots.txt contents are not in the encoding expected (%s)." % encoding)
+                msg = "Robots.txt contents are not in the encoding expected (%s)." % encoding
+                _raise_error(UnicodeError, msg)
             except (LookupError, ValueError):
                 # LookupError ==> Python doesn't have a decoder for that encoding.
                 # One can also get a ValueError here if the encoding starts with
                 # a dot (ASCII 0x2e). See Python bug 1446043 for details. This
                 # bug was supposedly fixed in Python 2.5.
-                _raise_error(UnicodeError,
-                        "I don't understand the encoding \"%s\"." % encoding)
+                msg = """I don't understand the encoding "%s".""" % encoding
+                _raise_error(UnicodeError, msg)
 
         # Now that I've fetched the content and turned it into Unicode, I
         # can parse it.
         self.parse(content)
 
-
     def parse(self, s):
         """Parses the passed string as a set of robots.txt rules."""
-        self._sitemaps = [ ]
-        self.__rulesets = [ ]
+        self._sitemaps = []
+        self.__rulesets = []
 
         if (PY_MAJOR_VERSION > 2) and (isinstance(s, bytes) or isinstance(s, bytearray)) or \
-           (PY_MAJOR_VERSION == 2) and (not isinstance(s, unicode)):
+           (PY_MAJOR_VERSION == 2) and (not isinstance(s, unicode)):  # noqa
             s = s.decode("iso-8859-1")
 
         # Normalize newlines.
@@ -569,7 +564,8 @@ class RobotExclusionRulesParser(object):
             else:
                 # Remove comments
                 i = line.find("#")
-                if i != -1: line = line[:i]
+                if i != -1:
+                    line = line[:i]
 
                 line = line.strip()
 
@@ -613,7 +609,7 @@ class RobotExclusionRulesParser(object):
                                 # Save the current ruleset and start a new one.
                                 if current_ruleset and current_ruleset.is_not_empty():
                                     self.__rulesets.append(current_ruleset)
-                                #else:
+                                # else:
                                     # (is_not_empty() == False) ==> malformed
                                     # robots.txt listed a UA line but provided
                                     # no name or didn't provide any rules
@@ -660,7 +656,6 @@ class RobotExclusionRulesParser(object):
 
         self.__rulesets = not_defaults + defaults
 
-
     def __str__(self):
         s = self.__unicode__()
         if PY_MAJOR_VERSION == 2:
@@ -674,18 +669,18 @@ class RobotExclusionRulesParser(object):
         else:
             s = ""
         if PY_MAJOR_VERSION < 3:
-            s = unicode(s)
+            s = unicode(s)  # noqa
         # I also need to string-ify each ruleset. The function for doing so
         # varies under Python 2/3.
-        stringify = (unicode if (PY_MAJOR_VERSION == 2) else str)
-        return s + '\n'.join( [stringify(ruleset) for ruleset in self.__rulesets] )
+        stringify = (unicode if (PY_MAJOR_VERSION == 2) else str)  # noqa
+        return s + '\n'.join([stringify(ruleset) for ruleset in self.__rulesets])
 
 
 class RobotFileParserLookalike(RobotExclusionRulesParser):
     """A drop-in replacement for the Python standard library's RobotFileParser
     that retains all of the features of RobotExclusionRulesParser.
     """
-    def __init__(self, url = ""):
+    def __init__(self, url=""):
         RobotExclusionRulesParser.__init__(self)
 
         self._user_provided_url = ""
@@ -693,28 +688,22 @@ class RobotFileParserLookalike(RobotExclusionRulesParser):
 
         self.set_url(url)
 
-
     def set_url(self, url):
         # I don't want to stuff this into self._source_url because
         # _source_url is set only as a side effect of calling fetch().
         self._user_provided_url = url
 
-
     def read(self):
         RobotExclusionRulesParser.fetch(self, self._user_provided_url)
-
 
     def parse(self, lines):
         RobotExclusionRulesParser.parse(self, ''.join(lines))
 
-
     def can_fetch(self, user_agent, url, syntax=GYM2008):
         return RobotExclusionRulesParser.is_allowed(self, user_agent, url, syntax)
 
-
     def mtime(self):
         return self.last_checked
-
 
     def modified(self):
         self.last_checked = time.time()
