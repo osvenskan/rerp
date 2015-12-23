@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-
-"""
-This is unit test code for robotexclusionrulesparser.py. For more info, see:
-http://NikitaTheSpider.com/python/rerp/
-
-"""
 # Python imports
 import sys
 import socket
@@ -82,7 +76,7 @@ class TestFetchFailures(unittest.TestCase):
             self.parser.fetch(url)
 
     def test_401_handling(self):
-        """Test handling of response code 401 (Unauthorized)"""
+        """Test handling of response code 401 (Unauthorized) - everything disallowed"""
         self.parser.fetch(HOST_NAME + "/response_code/{}/robots.txt".format(401))
 
         self.assertFalse(self.parser.is_allowed("NigelBot", "/"))
@@ -90,7 +84,7 @@ class TestFetchFailures(unittest.TestCase):
         self.assertFalse(self.parser.is_allowed("BruceBruceBruceBot", "/index.html"))
 
     def test_403_handling(self):
-        """Test handling of response code 403 (Forbidden)"""
+        """Test handling of response code 403 (Forbidden) - everything disallowed"""
         self.parser.fetch(HOST_NAME + "/response_code/{}/robots.txt".format(403))
 
         self.assertFalse(self.parser.is_allowed("NigelBot", "/"))
@@ -98,7 +92,7 @@ class TestFetchFailures(unittest.TestCase):
         self.assertFalse(self.parser.is_allowed("BruceBruceBruceBot", "/index.html"))
 
     def test_404_handling(self):
-        """Test handling of response code 404 (Not Found)"""
+        """Test handling of response code 404 (Not Found) - everything allowed"""
         self.parser.fetch(HOST_NAME + "/response_code/{}/robots.txt".format(404))
 
         self.assertTrue(self.parser.is_allowed("foobot", "/"))
