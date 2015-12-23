@@ -96,12 +96,7 @@ else:
 import re
 import time
 import calendar
-# rfc822 is deprecated since Python 2.3, but the functions I need from it
-# are in email.utils which isn't present until Python 2.5. ???
-try:
-    import email.utils as email_utils
-except ImportError:
-    import rfc822 as email_utils
+import email.utils as email_utils
 
 # flake8 note -- under Python3, flake8 complains about 'unicode' references so a couple of lines
 # here are noqa-ed to make flake8 happy.
@@ -139,15 +134,6 @@ _control_characters_regex = re.compile(r"""[\000-\037]|\0177""")
 _charset_extraction_regex = re.compile(r"""charset=['"]?(?P<encoding>[^'"]*)['"]?""")
 
 
-def _raise_error(error, message):
-    # I have to exec() this code because the Python 2 syntax is invalid
-    # under Python 3 and vice-versa.
-    s = "raise "
-    s += "error, message" if (PY_MAJOR_VERSION == 2) else "error(message)"
-
-    exec(s)
-
-
 def _unquote_path(path):
     # MK1996 says, 'If a %xx encoded octet is encountered it is unencoded
     # prior to comparison, unless it is the "/" character, which has
@@ -176,11 +162,7 @@ def _parse_content_type_header(header):
     #    text/plain; charset=UTF-8
     # The portion after "text/plain" is optional and often not present.
     # ref: http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.7
-
-    if header:
-        header = header.strip().lower()
-    else:
-        header = ""
+    header = header.strip().lower() if header else ""
 
     chunks = [s.strip() for s in header.split(";")]
     media_type = chunks[0]
@@ -262,7 +244,7 @@ class _Ruleset(object):
         allowed = True
 
         # Schemes and host names are not part of the robots.txt protocol,
-        # so  I ignore them. It is the caller's responsibility to make
+        # so I ignore them. It is the caller's responsibility to make
         # sure they match.
         _, _, path, parameters, query, fragment = urllib_urlparse(url)
         url = urllib_urlunparse(("", "", path, parameters, query, fragment))
@@ -333,8 +315,7 @@ class RobotExclusionRulesParser(object):
     def sitemap(self):
         """Deprecated; use 'sitemaps' instead. Returns the sitemap URL present
         in the robots.txt, if any. Defaults to None. Read only."""
-        _raise_error(DeprecationWarning,
-                     "The sitemap property is deprecated. Use 'sitemaps' instead.")
+        raise DeprecationWarning("The sitemap property is deprecated. Use 'sitemaps' instead.")
 
     @property
     def sitemaps(self):
@@ -382,7 +363,7 @@ class RobotExclusionRulesParser(object):
                 url = url.decode()
 
         if syntax not in (MK1996, GYM2008):
-            _raise_error(ValueError, "Syntax must be MK1996 or GYM2008")
+            raise ValueError("Syntax must be MK1996 or GYM2008")
 
         for ruleset in self.__rulesets:
             if ruleset.does_user_agent_match(user_agent):
@@ -401,8 +382,6 @@ class RobotExclusionRulesParser(object):
         for ruleset in self.__rulesets:
             if ruleset.does_user_agent_match(user_agent):
                 return ruleset.crawl_delay
-
-        return None
 
     def fetch(self, url, timeout=None):
         """Attempts to fetch the URL requested which should refer to a
@@ -512,7 +491,7 @@ class RobotExclusionRulesParser(object):
             content = ""
         else:
             # Uh-oh. I punt this up to the caller.
-            _raise_error(urllib_error.URLError, self._response_code)
+            raise urllib_error.URLError(self._response_code)
 
         if ((PY_MAJOR_VERSION == 2) and isinstance(content, str)) or \
            ((PY_MAJOR_VERSION > 2) and (not isinstance(content, str))):
@@ -524,14 +503,14 @@ class RobotExclusionRulesParser(object):
                 content = content.decode(encoding)
             except UnicodeError:
                 msg = "Robots.txt contents are not in the encoding expected (%s)." % encoding
-                _raise_error(UnicodeError, msg)
+                raise UnicodeError(msg)
             except (LookupError, ValueError):
                 # LookupError ==> Python doesn't have a decoder for that encoding.
                 # One can also get a ValueError here if the encoding starts with
                 # a dot (ASCII 0x2e). See Python bug 1446043 for details. This
                 # bug was supposedly fixed in Python 2.5.
                 msg = """I don't understand the encoding "%s".""" % encoding
-                _raise_error(UnicodeError, msg)
+                raise UnicodeError(msg)
 
         # Now that I've fetched the content and turned it into Unicode, I
         # can parse it.
