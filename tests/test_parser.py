@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-
-"""
-This is unit test code for robotexclusionrulesparser.py. For more info, see:
-http://NikitaTheSpider.com/python/rerp/
-
-"""
-
 # Python imports
 import sys
 PY_MAJOR_VERSION = sys.version_info[0]
