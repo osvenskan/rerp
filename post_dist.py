@@ -11,7 +11,7 @@ RSS_TIMESTAMP_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
 VERSION = open("VERSION").read().strip()
 
 # Make a copy of the tarball for posterity
-tarball_name = "posix_ipc-%s.tar.gz" % VERSION
+tarball_name = "robotexclusionrulesparser-%s.tar.gz" % VERSION
 shutil.copyfile(os.path.join("dist", tarball_name),
                 os.path.join("releases", tarball_name))
 
