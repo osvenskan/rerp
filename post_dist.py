@@ -10,6 +10,11 @@ RSS_TIMESTAMP_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
 
 VERSION = open("VERSION").read().strip()
 
+# Make a copy of the tarball for posterity
+tarball_name = "posix_ipc-%s.tar.gz" % VERSION
+shutil.copyfile(os.path.join("dist", tarball_name),
+                os.path.join("releases", tarball_name))
+
 tarball_name = "dist/robotexclusionrulesparser-%s.tar.gz" % VERSION
 md5_name = "robotexclusionrulesparser-%s.md5.txt" % VERSION
 sha1_name = "robotexclusionrulesparser-%s.sha1.txt" % VERSION
@@ -43,3 +48,4 @@ print """
 
 """ % (VERSION, VERSION, timestamp, VERSION)
 
+print 'hg tag rel' + VERSION
