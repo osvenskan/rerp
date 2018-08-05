@@ -22,16 +22,17 @@ else:
     import socketserver
 
 # Project imports
-import robotexclusionrulesparser
+import robotexclusionrulesparser  # noqa E402
 # I add this file's directory to sys.path so that I can find my utils module.
 sys.path.insert(0, os.path.dirname(__file__))
-import utils_for_tests
+import utils_for_tests             # noqa E402
 
 # These three variables have to be global so they can be shared by setUpModule(), tearDownModule(),
 # and MyHTTPRequestHandler.
 http_server_thread = None
 PORT = None
 HOST_NAME = 'http://localhost:{}'
+
 
 def setUpModule():
     """Start the HTTP server in another thread"""

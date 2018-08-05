@@ -2,7 +2,7 @@
 # Python imports
 import sys
 PY_MAJOR_VERSION = sys.version_info[0]
-import unittest
+import unittest  # noqa E402
 
 if PY_MAJOR_VERSION < 3:
     import robotparser
@@ -10,10 +10,10 @@ else:
     import urllib.robotparser as robotparser
 
 # Project imports
-import robotexclusionrulesparser
+import robotexclusionrulesparser   # noqa E402
 
 
-class TestStandardLibraryParserComparion(unittest.TestCase):
+class TestStandardLibraryParserComparison(unittest.TestCase):
     """Verify that this parser agrees with the parser from the standard lib"""
     def setUp(self):
         self.parser = robotexclusionrulesparser.RobotFileParserLookalike()
@@ -371,7 +371,12 @@ Disallow:  /foo*/*bar.html
 User-agent: Rule6TestBot
 Allow:  /foo$
 Disallow:  /foo
-        """
+
+# Exercise excessive wildcards
+# https://bitbucket.org/philip_semanchuk/robotexclusionrulesparser/issues/1
+User-agent: Rule7TestBot
+Allow: *****************/****.js
+"""
         self.parser.parse(robots_txt)
 
         self.assertTrue(self.parser.is_allowed("Rule1TestBot", "/fo.html"))
@@ -409,6 +414,9 @@ Disallow:  /foo
         self.assertFalse(self.parser.is_allowed("Rule6TestBot", "/foo/"))
         self.assertFalse(self.parser.is_allowed("Rule6TestBot", "/foo/bar.html"))
         self.assertFalse(self.parser.is_allowed("Rule6TestBot", "/fooey"))
+
+        self.assertTrue(self.parser.is_allowed("Rule7TestBot", "xyz/foo.js"))
+        self.assertTrue(self.parser.is_allowed("Rule7TestBot", "/inlife/daily/fashion-20160727/"))
 
     def test_GYM2008_crawl_delay_and_sitemap(self):
         """Test parsing of the GYM2008-specific directives crawl-delay and sitemap"""

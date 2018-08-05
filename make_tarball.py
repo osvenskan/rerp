@@ -9,7 +9,7 @@ RSS_TIMESTAMP_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
 
 VERSION = open("VERSION").read().strip()
 
-shutil.copyfile("robotexclusionrulesparser.py", "robotexclusionrulesparser-%s.py" % VERSION) 
+shutil.copyfile("robotexclusionrulesparser.py", "robotexclusionrulesparser-%s.py" % VERSION)
 
 filenames = (
     "LICENSE",
@@ -37,7 +37,7 @@ for name in filenames:
     SourceName = SourceDir + name
     BundledName = BundleDir + name
 
-    print "Adding " + SourceName
+    print("Adding " + SourceName)
 
     tarball.add(SourceName, BundledName, False)
 tarball.close()
@@ -46,7 +46,7 @@ s = open("./" + tarball_name).read()
 
 s = hashlib.md5(s).hexdigest()
 
-print "md5 = " + s
+print("md5 = " + s)
 
 open(md5_name, "w").write(s)
 
@@ -54,16 +54,15 @@ open(md5_name, "w").write(s)
 # Print an RSS item suitable for pasting into rss.xml
 timestamp = time.strftime(RSS_TIMESTAMP_FORMAT, time.gmtime())
 
-print """
+print("""
 
-		<item>
-			<guid isPermaLink="false">%s</guid>
-			<title>Robotexclusionrulesparser %s Released</title>
-			<pubDate>%s</pubDate>
-			<link>http://nikitathespider.com/python/rerp/</link>
-			<description>Version %s of robotexclusionrulesparser has been released.
-			</description>
-		</item>
+        <item>
+            <guid isPermaLink="false">%s</guid>
+            <title>Robotexclusionrulesparser %s Released</title>
+            <pubDate>%s</pubDate>
+            <link>http://nikitathespider.com/python/rerp/</link>
+            <description>Version %s of robotexclusionrulesparser has been released.
+            </description>
+        </item>
 
-""" % (VERSION, VERSION, timestamp, VERSION)
-
+""" % (VERSION, VERSION, timestamp, VERSION))

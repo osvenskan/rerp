@@ -8,7 +8,8 @@ import os
 
 RSS_TIMESTAMP_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
 
-VERSION = open("VERSION").read().strip()
+with open("VERSION") as f:
+    VERSION = f.read().strip()
 
 # Make a copy of the tarball for posterity
 tarball_name = "robotexclusionrulesparser-%s.tar.gz" % VERSION
@@ -20,22 +21,25 @@ md5_name = "robotexclusionrulesparser-%s.md5.txt" % VERSION
 sha1_name = "robotexclusionrulesparser-%s.sha1.txt" % VERSION
 
 # Generate the tarball hashes
-s = open(tarball_name).read()
+with open(tarball_name, 'rb') as f:
+    s = f.read()
 
 md5 = hashlib.md5(s).hexdigest()
 sha1 = hashlib.sha1(s).hexdigest()
 
-open(md5_name, "wb").write(md5)
-open(sha1_name, "wb").write(sha1)
+with open(md5_name, "w") as f:
+    f.write(md5)
+with open(sha1_name, "w") as f:
+    f.write(sha1)
 
-print "md5  = " + md5
-print "sha1 = " + sha1
+print("md5  = " + md5)
+print("sha1 = " + sha1)
 
 
 # Print an RSS item suitable for pasting into rss.xml
 timestamp = time.strftime(RSS_TIMESTAMP_FORMAT, time.gmtime())
 
-print """
+print("""
 
         <item>
             <guid isPermaLink="false">%s</guid>
@@ -46,6 +50,6 @@ print """
             </description>
         </item>
 
-""" % (VERSION, VERSION, timestamp, VERSION)
+""" % (VERSION, VERSION, timestamp, VERSION))
 
-print 'hg tag rel' + VERSION
+print('hg tag rel' + VERSION)

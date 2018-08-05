@@ -52,7 +52,7 @@ GYM2008 = the Google-Yahoo-Microsoft extensions announced in 2008
 
 This code is released under the following BSD license --
 
-Copyright (c) 2015, Philip Semanchuk
+Copyright (c) 2018, Philip Semanchuk
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -93,10 +93,10 @@ else:
     from urllib.parse import urlparse as urllib_urlparse
     from urllib.parse import urlunparse as urllib_urlunparse
 
-import re
-import time
-import calendar
-import email.utils as email_utils
+import re                              # noqa E402
+import time                            # noqa E402
+import calendar                        # noqa E402
+import email.utils as email_utils      # noqa E402
 
 # flake8 note -- under Python3, flake8 complains about 'unicode' references so a couple of lines
 # here are noqa-ed to make flake8 happy.
@@ -264,9 +264,13 @@ class _Ruleset(object):
                     path = path[:-1]
                 else:
                     appendix = ""
+                # Multiple wildcards characters mean the same as one wildcard so they can be
+                # condensed into one. If I don't do this, I run the risk of creating a
+                # pathological regex.
+                # ref: https://bitbucket.org/philip_semanchuk/robotexclusionrulesparser/issues/1
+                path = re.sub(r'\*+', '*', path)
                 parts = path.split("*")
-                pattern = "%s%s" % \
-                    (".*".join([re.escape(p) for p in parts]), appendix)
+                pattern = ".*".join([re.escape(p) for p in parts]) + appendix
                 if re.match(pattern, url):
                     # Ding!
                     done = True
