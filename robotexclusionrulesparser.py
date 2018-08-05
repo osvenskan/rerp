@@ -52,7 +52,7 @@ GYM2008 = the Google-Yahoo-Microsoft extensions announced in 2008
 
 This code is released under the following BSD license --
 
-Copyright (c) 2015, Philip Semanchuk
+Copyright (c) 2018, Philip Semanchuk
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
