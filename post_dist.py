@@ -21,15 +21,15 @@ md5_name = "robotexclusionrulesparser-%s.md5.txt" % VERSION
 sha1_name = "robotexclusionrulesparser-%s.sha1.txt" % VERSION
 
 # Generate the tarball hashes
-with open(tarball_name) as f:
+with open(tarball_name, 'rb') as f:
     s = f.read()
 
 md5 = hashlib.md5(s).hexdigest()
 sha1 = hashlib.sha1(s).hexdigest()
 
-with open(md5_name, "wb") as f:
+with open(md5_name, "w") as f:
     f.write(md5)
-with open(sha1_name, "wb") as f:
+with open(sha1_name, "w") as f:
     f.write(sha1)
 
 print("md5  = " + md5)
