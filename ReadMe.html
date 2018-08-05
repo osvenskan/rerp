@@ -39,11 +39,11 @@ Python's standard library.
 tests, etc.) or just the individual module.</p>
 
 <p>Full package:
-<a href="robotexclusionrulesparser-1.7.0.tar.gz">robotexclusionrulesparser-1.7.0.tar.gz</a>
-<a href="robotexclusionrulesparser-1.7.0.md5.txt">[md5 sum]</a>
+<a href="robotexclusionrulesparser-1.7.1.tar.gz">robotexclusionrulesparser-1.7.1.tar.gz</a>
+<a href="robotexclusionrulesparser-1.7.1.md5.txt">[md5 sum]</a>
 </p>
 <p>Just the module:
-    <a href="robotexclusionrulesparser-1.7.0.py">robotexclusionrulesparser-1.7.0.py</a>
+    <a href="robotexclusionrulesparser-1.7.1.py">robotexclusionrulesparser-1.7.1.py</a>
 </p>
 
 <p>The exact same <a href="https://pypi.python.org/pypi/robotexclusionrulesparser">
@@ -611,7 +611,14 @@ nothing is allowed. Thus, these two rules mean the same thing:
 <h3>Version History</h3>
 
 <ul>
-    <li><strong>Current &ndash; 1.7.0 (29 Dec 2015)</strong> &ndash;
+    <li><strong>Current &ndash; 1.7.1 (12 Aug 2016)</strong> &ndash;
+    	<p>Fixed a bug where badly-formed directives that contained runs of
+    	multiple wildcards could result in a pathological, CPU-crushing regex.
+    	Thanks to Mike Klaas for the bug report and patch.
+    </p>
+    </li>
+
+    <li>1.7.0 (29 Dec 2015) &ndash;
     	<p>There are no functional changes in this version.
 
         <ul>
