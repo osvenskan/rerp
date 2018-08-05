@@ -264,9 +264,13 @@ class _Ruleset(object):
                     path = path[:-1]
                 else:
                     appendix = ""
+                # Multiple wildcards characters mean the same as one wildcard so they can be
+                # condensed into one. If I don't do this, I run the risk of creating a
+                # pathological regex.
+                # ref: https://bitbucket.org/philip_semanchuk/robotexclusionrulesparser/issues/1
+                path = re.sub(r'\*+', '*', path)
                 parts = path.split("*")
-                pattern = "%s%s" % \
-                    (".*".join([re.escape(p) for p in parts]), appendix)
+                pattern = ".*".join([re.escape(p) for p in parts]) + appendix
                 if re.match(pattern, url):
                     # Ding!
                     done = True
