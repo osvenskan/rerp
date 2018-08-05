@@ -93,10 +93,10 @@ else:
     from urllib.parse import urlparse as urllib_urlparse
     from urllib.parse import urlunparse as urllib_urlunparse
 
-import re
-import time
-import calendar
-import email.utils as email_utils
+import re                              # noqa E402
+import time                            # noqa E402
+import calendar                        # noqa E402
+import email.utils as email_utils      # noqa E402
 
 # flake8 note -- under Python3, flake8 complains about 'unicode' references so a couple of lines
 # here are noqa-ed to make flake8 happy.

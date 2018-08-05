@@ -2,7 +2,7 @@
 # Python imports
 import sys
 PY_MAJOR_VERSION = sys.version_info[0]
-import unittest
+import unittest  # noqa E402
 
 if PY_MAJOR_VERSION < 3:
     import robotparser
@@ -10,7 +10,7 @@ else:
     import urllib.robotparser as robotparser
 
 # Project imports
-import robotexclusionrulesparser
+import robotexclusionrulesparser   # noqa E402
 
 
 class TestStandardLibraryParserComparison(unittest.TestCase):
